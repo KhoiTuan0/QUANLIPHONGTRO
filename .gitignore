@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+.vs/
+**/.vs/
+*.user
+*.suo
+*.zip
+*.rar
+*.7z
+*.log
+**/TestResults/
+.env
+.env.*
+*.pfx
+*.p12
