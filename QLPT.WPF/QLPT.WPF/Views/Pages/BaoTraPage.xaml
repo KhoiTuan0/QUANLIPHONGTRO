@@ -1,0 +1,28 @@
+﻿<UserControl x:Class="QLPT.WPF.Views.Pages.BaoTraPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:QLPT.WPF.Controls">
+
+    <ctl:CrudTable Margin="20,16,20,20"
+                   ItemsSource="{Binding Items}"
+                   SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                   ReloadCommand="{Binding LoadCommand}"
+                   AddCommand="{Binding ThemCommand}"
+                   IsBusy="{Binding IsBusy}"
+                   ErrorMessage="{Binding ErrorMessage}"
+                   AddLabel="Báo trả mới"
+                   ShowEdit="False"
+                   ShowDelete="False"
+                   SearchHint="Tìm theo mã báo trả, hợp đồng, khách…">
+
+        <ctl:CrudTable.Columns>
+            <DataGridTextColumn Header="MÃ BT"            Binding="{Binding MaBaoTra}"      Width="0.8*" MinWidth="80"/>
+            <DataGridTextColumn Header="MÃ HĐ"            Binding="{Binding MaHopDong}"     Width="0.8*" MinWidth="80"/>
+            <DataGridTextColumn Header="MÃ KHÁCH"         Binding="{Binding MaKhach}"       Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="NGÀY BÁO"         Binding="{Binding NgayBao}"       Width="1.2*" MinWidth="120"/>
+            <DataGridTextColumn Header="NGÀY DỰ KIẾN TRẢ" Binding="{Binding NgayDuKienTra}" Width="1.4*" MinWidth="140"/>
+            <DataGridTextColumn Header="LÝ DO"            Binding="{Binding LyDo}"          Width="2*" MinWidth="200"/>
+            <DataGridTextColumn Header="TRẠNG THÁI"       Binding="{Binding TrangThai}"     Width="*"/>
+        </ctl:CrudTable.Columns>
+    </ctl:CrudTable>
+</UserControl>

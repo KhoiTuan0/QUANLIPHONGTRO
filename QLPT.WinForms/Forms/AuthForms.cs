@@ -117,7 +117,7 @@ public class LoginForm : Form
         bottom.Controls.Add(hint);
 
         card.Controls.Add(p); card.Controls.Add(bottom); card.Controls.Add(title);
-        title.BringToFront();
+        // Keep the Fill panel first in z-order so docking reserves space for the title.
 
         Controls.Add(card); Controls.Add(sub); Controls.Add(header);
         Load += (s, e) => CenterCard();

@@ -1,0 +1,30 @@
+﻿<UserControl x:Class="QLPT.WPF.Views.Pages.CoSoPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:QLPT.WPF.Controls"
+             xmlns:vm="clr-namespace:QLPT.WPF.ViewModels">
+    <UserControl.DataContext>
+        <vm:CoSoViewModel/>
+    </UserControl.DataContext>
+
+    <ctl:CrudTable Margin="20,16,20,20"
+                   ItemsSource="{Binding Items}"
+                   SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                   ReloadCommand="{Binding LoadCommand}"
+                   AddCommand="{Binding AddCommand}"
+                   EditCommand="{Binding EditCommand}"
+                   DeleteCommand="{Binding DeleteCommand}"
+                   IsBusy="{Binding IsBusy}"
+                   ErrorMessage="{Binding ErrorMessage}"
+                   AddLabel="Thêm cơ sở"
+                   DeleteLabel="Xóa cơ sở này"
+                   SearchHint="Tìm theo tên, địa chỉ, SĐT…">
+        <ctl:CrudTable.Columns>
+            <DataGridTextColumn Header="MÃ"        Binding="{Binding MaCoSo}"      Width="0.6*" MinWidth="60"/>
+            <DataGridTextColumn Header="TÊN CƠ SỞ" Binding="{Binding TenCoSo}"     Width="*"/>
+            <DataGridTextColumn Header="ĐỊA CHỈ"   Binding="{Binding DiaChi}"      Width="2*"/>
+            <DataGridTextColumn Header="SĐT"       Binding="{Binding SoDienThoai}" Width="1.3*" MinWidth="130"/>
+            <DataGridTextColumn Header="MÔ TẢ"     Binding="{Binding MoTa}"        Width="*"/>
+        </ctl:CrudTable.Columns>
+    </ctl:CrudTable>
+</UserControl>

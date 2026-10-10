@@ -1,0 +1,73 @@
+﻿<UserControl x:Class="QLPT.WPF.Views.Pages.CuTruPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:ctl="clr-namespace:QLPT.WPF.Controls">
+
+    <ctl:CrudTable Margin="20,16,20,20"
+                   ItemsSource="{Binding Items}"
+                   SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                   ReloadCommand="{Binding TaiCommand}"
+                   AddCommand="{Binding ThemNguoiCommand}"
+                   IsBusy="{Binding IsBusy}"
+                   ErrorMessage="{Binding ErrorMessage}"
+                   AddLabel="Thêm người ở cùng"
+                   ShowEdit="False"
+                   ShowDelete="False"
+                   SearchHint="Tìm theo họ tên, mã khách…">
+
+        <!-- Nghiệp vụ riêng: đổi trạng thái của dòng đang chọn -->
+        <ctl:CrudTable.ExtraActions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Command="{Binding KhaiBaoCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="36" Padding="12,0" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="AccountCheck" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Đã khai báo" Margin="6,0,0,0" FontSize="13"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding TamVangCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="36" Padding="12,0" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="AccountClock" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Tạm vắng" Margin="6,0,0,0" FontSize="13"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding TroLaiCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="36" Padding="12,0" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="LoginVariant" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Trở lại" Margin="6,0,0,0" FontSize="13"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding RoiDiCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="36" Padding="12,0"
+                        Foreground="#EF4444" BorderBrush="#EF4444">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="LogoutVariant" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Đã rời đi" Margin="6,0,0,0" FontSize="13"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </ctl:CrudTable.ExtraActions>
+
+        <ctl:CrudTable.Columns>
+            <DataGridTextColumn Header="MÃ CƯ TRÚ"   Binding="{Binding MaCuTru}"          Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="MÃ HĐ"       Binding="{Binding MaHopDong}"        Width="0.7*" MinWidth="70"/>
+            <DataGridTextColumn Header="MÃ KHÁCH"    Binding="{Binding MaKhach}"          Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="HỌ TÊN"      Binding="{Binding HoTen}"            Width="1.6*" MinWidth="160"/>
+            <DataGridTextColumn Header="NGÀY VÀO"    Binding="{Binding NgayVao}"          Width="1.1*" MinWidth="110"/>
+            <DataGridTextColumn Header="NGÀY RỜI"    Binding="{Binding NgayRoi}"          Width="1.1*" MinWidth="110"/>
+            <DataGridTextColumn Header="TT CƯ TRÚ"   Binding="{Binding TrangThaiCuTru}"   Width="1.1*" MinWidth="110"/>
+            <DataGridTextColumn Header="TT KHAI BÁO" Binding="{Binding TrangThaiKhaiBao}" Width="*"/>
+        </ctl:CrudTable.Columns>
+    </ctl:CrudTable>
+</UserControl>

@@ -1,0 +1,31 @@
+﻿<UserControl x:Class="QLPT.WPF.Views.Pages.DichVuPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:QLPT.WPF.Controls"
+             xmlns:vm="clr-namespace:QLPT.WPF.ViewModels">
+    <UserControl.DataContext>
+        <vm:DichVuViewModel/>
+    </UserControl.DataContext>
+
+    <!-- Dịch vụ chỉ cho thêm / xóa, không sửa trực tiếp -->
+    <ctl:CrudTable Margin="20,16,20,20"
+                   ItemsSource="{Binding Items}"
+                   SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                   ReloadCommand="{Binding LoadCommand}"
+                   AddCommand="{Binding AddCommand}"
+                   DeleteCommand="{Binding DeleteCommand}"
+                   ShowEdit="False"
+                   IsBusy="{Binding IsBusy}"
+                   ErrorMessage="{Binding ErrorMessage}"
+                   AddLabel="Thêm dịch vụ"
+                   DeleteLabel="Xóa dịch vụ này"
+                   SearchHint="Tìm theo tên dịch vụ, đơn giá…">
+        <ctl:CrudTable.Columns>
+            <DataGridTextColumn Header="MÃ"          Binding="{Binding MaDichVu}"      Width="0.6*" MinWidth="60"/>
+            <DataGridTextColumn Header="TÊN DỊCH VỤ" Binding="{Binding TenDichVu}"     Width="*"/>
+            <DataGridTextColumn Header="ĐƠN VỊ TÍNH" Binding="{Binding DonViTinh}"     Width="1.1*" MinWidth="110"/>
+            <DataGridTextColumn Header="ĐƠN GIÁ"     Binding="{Binding DonGiaDisplay}" Width="1.4*" MinWidth="140"/>
+            <DataGridTextColumn Header="TRẠNG THÁI"  Binding="{Binding TrangThai}"     Width="1.5*" MinWidth="150"/>
+        </ctl:CrudTable.Columns>
+    </ctl:CrudTable>
+</UserControl>

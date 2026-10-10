@@ -1,0 +1,45 @@
+﻿<Window x:Class="QLPT.WPF.Views.Dialogs.GiaHanDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:svc="clr-namespace:QLPT.WPF.Services"
+        Title="Gia hạn hợp đồng" Style="{StaticResource Win10Dialog}"
+        Width="400" SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize" MaxHeight="700"
+        Background="{DynamicResource Win11SurfaceBrush}"
+        TextElement.Foreground="{DynamicResource Win11TextPrimaryBrush}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Gia hạn hợp đồng" FontSize="18" FontWeight="Bold"
+                   Foreground="{DynamicResource Win11TextPrimaryBrush}" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="1" x:Name="TxtMaHD" FontSize="13" Foreground="{DynamicResource Win11TextSecondaryBrush}" Margin="0,0,0,16"/>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,4,0,0">
+            <DatePicker x:Name="DpNgayKetThucMoi" md:HintAssist.Hint="Ngày kết thúc mới *"
+                        Style="{StaticResource MaterialDesignOutlinedDatePicker}" Margin="0,0,0,12"/>
+            <TextBox x:Name="TxtGiaThueMoi" svc:MoneyInput.IsEnabled="True" md:HintAssist.Hint="Giá thuê mới (để trống = giữ nguyên)"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+        </StackPanel>
+        </ScrollViewer>
+
+        <TextBlock Grid.Row="3" x:Name="TxtError" Foreground="Red" FontSize="12"
+                   TextWrapping="Wrap" Margin="0,8,0,4" Visibility="Collapsed"/>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Hủy" IsCancel="True" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,8,0"/>
+            <Button Content="Gia hạn" Click="BtnOk_Click"
+                    Style="{StaticResource MaterialDesignRaisedButton}" IsDefault="True"/>
+        </StackPanel>
+    </Grid>
+</Window>
+
+

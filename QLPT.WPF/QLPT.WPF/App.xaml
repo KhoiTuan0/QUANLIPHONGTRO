@@ -1,0 +1,236 @@
+<Application x:Class="QLPT.WPF.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:conv="clr-namespace:QLPT.WPF.Converters"
+             xmlns:svc="clr-namespace:QLPT.WPF.Services"
+             ShutdownMode="OnExplicitShutdown"
+             Startup="App_Startup">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme BaseTheme="Light"
+                                             PrimaryColor="Blue"
+                                             SecondaryColor="Blue" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+            <conv:BoolToSidebarWidthConverter x:Key="BoolToSidebarWidth"/>
+            <conv:NotNullToBoolConverter x:Key="NotNull"/>
+
+            <!-- Win11 color palette — minimalist neutral -->
+            <Color x:Key="Win11Accent">#0066CC</Color>
+            <Color x:Key="Win11AccentLight">#EEF4FF</Color>
+            <Color x:Key="Win11SidebarBg">#FAFAFA</Color>
+            <Color x:Key="Win11ContentBg">#F5F5F5</Color>
+            <Color x:Key="Win11Surface">#FFFFFF</Color>
+            <Color x:Key="Win11TextPrimary">#111111</Color>
+            <Color x:Key="Win11TextSecondary">#888888</Color>
+            <Color x:Key="Win11Border">#E5E5E5</Color>
+
+            <SolidColorBrush x:Key="Win11AccentBrush"          Color="#0066CC"/>
+            <SolidColorBrush x:Key="Win11AccentLightBrush"     Color="#EEF4FF"/>
+            <!-- Sidebar mang màu chủ đạo; ThemeService đổi nền theo sáng/tối.
+                 Chữ, hover, mục đang chọn dùng lớp trắng trong suốt nên hợp cả hai nền. -->
+            <SolidColorBrush x:Key="Win11SidebarBrush"         Color="#0B57B0"/>
+            <SolidColorBrush x:Key="SidebarTextBrush"          Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="SidebarTextSecondaryBrush" Color="#B8FFFFFF"/>
+            <SolidColorBrush x:Key="SidebarItemBrush"          Color="#E6FFFFFF"/>
+            <SolidColorBrush x:Key="SidebarGroupBrush"         Color="#8CFFFFFF"/>
+            <SolidColorBrush x:Key="SidebarHoverBrush"         Color="#14FFFFFF"/>
+            <SolidColorBrush x:Key="SidebarActiveBrush"        Color="#2EFFFFFF"/>
+            <SolidColorBrush x:Key="SidebarDividerBrush"       Color="#26FFFFFF"/>
+            <SolidColorBrush x:Key="SidebarSearchBrush"        Color="#1FFFFFFF"/>
+
+            <!-- Biểu đồ: 4 màu phân loại theo thứ tự cố định, đã chạy bộ kiểm tra
+                 mù màu / tương phản trên nền #FFFFFF (sáng) và #242424 (tối).
+                 ThemeService đổi sang bước màu của chế độ tối. -->
+            <SolidColorBrush x:Key="ChartSeries1Brush" Color="#2A78D6"/>
+            <SolidColorBrush x:Key="ChartSeries2Brush" Color="#EB6834"/>
+            <SolidColorBrush x:Key="ChartSeries3Brush" Color="#1BAF7A"/>
+            <SolidColorBrush x:Key="ChartSeries4Brush" Color="#EDA100"/>
+            <SolidColorBrush x:Key="ChartGridBrush"    Color="#ECECEA"/>
+            <SolidColorBrush x:Key="ChartAxisBrush"    Color="#C3C2B7"/>
+            <SolidColorBrush x:Key="ChartMutedBrush"   Color="#898781"/>
+            <SolidColorBrush x:Key="Win11ContentBrush"         Color="#F5F5F5"/>
+            <SolidColorBrush x:Key="Win11SurfaceBrush"         Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="Win11TextPrimaryBrush"     Color="#111111"/>
+            <SolidColorBrush x:Key="Win11TextSecondaryBrush"   Color="#888888"/>
+            <SolidColorBrush x:Key="Win11BorderBrush"          Color="#E5E5E5"/>
+            <SolidColorBrush x:Key="Win11HoverBrush"           Color="#0A000000"/>
+
+            <!-- Global font -->
+            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI, sans-serif"/>
+            </Style>
+            <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI, sans-serif"/>
+            </Style>
+
+            <!-- ══════ Dialog kiểu Windows 10 ══════
+                 Thanh tiêu đề tự vẽ cùng màu nền dialog (theo sáng/tối), góc vuông,
+                 viền 1px, nút ✕ 46×32 chuyển đỏ khi rê chuột. Dùng: Style="{StaticResource Win10Dialog}". -->
+            <Style x:Key="Win10CloseButton" TargetType="Button">
+                <Setter Property="Width" Value="46"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Focusable" Value="False"/>
+                <Setter Property="IsTabStop" Value="False"/>
+                <Setter Property="Foreground" Value="{DynamicResource Win11TextPrimaryBrush}"/>
+                <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Nen" Background="Transparent">
+                                <TextBlock x:Name="KyHieu" Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="{TemplateBinding Foreground}"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Nen" Property="Background" Value="#E81123"/>
+                                    <Setter TargetName="KyHieu" Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Nen" Property="Background" Value="#F1707A"/>
+                                    <Setter TargetName="KyHieu" Property="Foreground" Value="White"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="Win10Dialog" TargetType="Window">
+                <Setter Property="svc:DialogChrome.IsEnabled" Value="True"/>
+                <Setter Property="Background" Value="{DynamicResource Win11SurfaceBrush}"/>
+                <Setter Property="WindowChrome.WindowChrome">
+                    <Setter.Value>
+                        <!-- GlassFrameThickness ≠ 0 để giữ bóng đổ của Windows quanh dialog -->
+                        <WindowChrome CaptionHeight="32" ResizeBorderThickness="5" CornerRadius="0"
+                                      GlassFrameThickness="0,0,0,1" UseAeroCaptionButtons="False"/>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Window">
+                            <Border x:Name="Khung" Background="{TemplateBinding Background}"
+                                    BorderBrush="{DynamicResource Win11TextSecondaryBrush}" BorderThickness="1">
+                                <DockPanel>
+                                    <Grid DockPanel.Dock="Top" Height="32">
+                                        <TextBlock x:Name="TieuDe" Text="{TemplateBinding Title}"
+                                                   Margin="12,0,56,0" VerticalAlignment="Center"
+                                                   FontFamily="Segoe UI" FontSize="12" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource Win11TextPrimaryBrush}"/>
+                                        <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                Style="{StaticResource Win10CloseButton}"
+                                                Command="{x:Static SystemCommands.CloseWindowCommand}"/>
+                                    </Grid>
+                                    <AdornerDecorator>
+                                        <ContentPresenter/>
+                                    </AdornerDecorator>
+                                </DockPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <!-- Dialog không được chọn: tiêu đề và viền nhạt đi như Windows 10 -->
+                                <Trigger Property="IsActive" Value="False">
+                                    <Setter TargetName="TieuDe" Property="Foreground" Value="{DynamicResource Win11TextSecondaryBrush}"/>
+                                    <Setter TargetName="Khung" Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}"/>
+                                </Trigger>
+                                <!-- Phóng to: chừa phần khung bị Windows đẩy ra ngoài màn hình -->
+                                <Trigger Property="WindowState" Value="Maximized">
+                                    <Setter TargetName="Khung" Property="BorderThickness" Value="7"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Flat card: no shadow, thin border -->
+            <Style TargetType="materialDesign:Card" BasedOn="{StaticResource {x:Type materialDesign:Card}}">
+                <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}"/>
+                <Setter Property="Background" Value="{DynamicResource Win11SurfaceBrush}"/>
+            </Style>
+
+            <!-- ══════ Bảng dữ liệu ══════
+                 Material Design tự áp màu theo palette riêng của nó, lệch tông với
+                 bộ Win11*Brush (rõ nhất ở dark mode). Ghi đè ở đây một lần để mọi
+                 DataGrid trong app đều theo đúng theme. -->
+
+            <Style x:Key="AppDataGridHeader" TargetType="DataGridColumnHeader"
+                   BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Padding" Value="10,8"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Win11TextSecondaryBrush}"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="MinHeight" Value="38"/>
+                <!-- Tiêu đề dài thì xuống dòng, không cắt bớt thành "..." -->
+                <Setter Property="ContentTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                                       TextWrapping="Wrap"
+                                       TextTrimming="None"
+                                       LineHeight="14"
+                                       VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="AppDataGridRow" TargetType="DataGridRow"
+                   BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                <!-- Dòng chọn được / nhấp đúp để sửa: hiện bàn tay khi rê chuột -->
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource Win11TextPrimaryBrush}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Win11HoverBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Win11AccentLightBrush}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource Win11TextPrimaryBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="AppDataGridCell" TargetType="DataGridCell"
+                   BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Padding" Value="14,9"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource Win11TextPrimaryBrush}"/>
+                <Style.Triggers>
+                    <!-- Để dòng quyết định màu nền khi được chọn, ô không tô đè -->
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Foreground" Value="{DynamicResource Win11TextPrimaryBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="DataGrid" BasedOn="{StaticResource MaterialDesignDataGrid}">
+                <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="RowBackground" Value="Transparent"/>
+                <Setter Property="AlternatingRowBackground" Value="Transparent"/>
+                <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource Win11BorderBrush}"/>
+                <Setter Property="VerticalGridLinesBrush" Value="Transparent"/>
+                <Setter Property="ColumnHeaderStyle" Value="{StaticResource AppDataGridHeader}"/>
+                <Setter Property="RowStyle" Value="{StaticResource AppDataGridRow}"/>
+                <Setter Property="CellStyle" Value="{StaticResource AppDataGridCell}"/>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

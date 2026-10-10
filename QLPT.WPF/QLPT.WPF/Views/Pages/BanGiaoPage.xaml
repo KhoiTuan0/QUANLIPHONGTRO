@@ -1,0 +1,38 @@
+﻿<UserControl x:Class="QLPT.WPF.Views.Pages.BanGiaoPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:ctl="clr-namespace:QLPT.WPF.Controls">
+
+    <ctl:CrudTable Margin="20,16,20,20"
+                   ItemsSource="{Binding Items}"
+                   SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                   ReloadCommand="{Binding TaiCommand}"
+                   EditCommand="{Binding CapNhatTinhTrangCommand}"
+                   IsBusy="{Binding IsBusy}"
+                   ErrorMessage="{Binding ErrorMessage}"
+                   EditLabel="Cập nhật tình trạng"
+                   ShowAdd="False"
+                   ShowDelete="False"
+                   SearchHint="Tìm theo tên tài sản, tình trạng…">
+
+        <!-- Chọn phòng cần xem — Enter để tải, hoặc bấm nút làm mới trên thanh công cụ -->
+        <ctl:CrudTable.ExtraFilter>
+            <TextBox Text="{Binding MaPhong, UpdateSourceTrigger=PropertyChanged}"
+                     md:HintAssist.Hint="Mã phòng"
+                     Width="180" VerticalAlignment="Center"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding TaiCommand}"/>
+                </TextBox.InputBindings>
+            </TextBox>
+        </ctl:CrudTable.ExtraFilter>
+
+        <ctl:CrudTable.Columns>
+            <DataGridTextColumn Header="MÃ TS PHÒNG" Binding="{Binding MaTaiSanPhong}" Width="1.2*" MinWidth="120"/>
+            <DataGridTextColumn Header="TÊN TÀI SẢN" Binding="{Binding TenTaiSan}"     Width="2*" MinWidth="200"/>
+            <DataGridTextColumn Header="SỐ LƯỢNG"    Binding="{Binding SoLuong}"       Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="TÌNH TRẠNG"  Binding="{Binding TinhTrang}"     Width="*"/>
+        </ctl:CrudTable.Columns>
+    </ctl:CrudTable>
+</UserControl>

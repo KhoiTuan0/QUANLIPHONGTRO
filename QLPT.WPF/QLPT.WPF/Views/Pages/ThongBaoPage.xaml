@@ -1,0 +1,78 @@
+<UserControl x:Class="QLPT.WPF.Views.Pages.ThongBaoPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:ctl="clr-namespace:QLPT.WPF.Controls"
+             xmlns:vm="clr-namespace:QLPT.WPF.ViewModels">
+    <UserControl.DataContext>
+        <vm:ThongBaoViewModel/>
+    </UserControl.DataContext>
+
+    <ctl:CrudTable Margin="20,16,20,20"
+                   ItemsSource="{Binding Items}"
+                   SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                   ReloadCommand="{Binding LoadCommand}"
+                   AddCommand="{Binding GuiCommand}"
+                   ShowAdd="{Binding IsAdmin}"
+                   ShowEdit="False"
+                   ShowDelete="False"
+                   IsBusy="{Binding IsBusy}"
+                   ErrorMessage="{Binding ErrorMessage}"
+                   AddLabel="Gửi thông báo"
+                   AddIcon="Send"
+                   SearchHint="Tìm theo tiêu đề, nội dung, loại…">
+
+        <ctl:CrudTable.ExtraActions>
+            <StackPanel Orientation="Horizontal">
+                <!-- Admin: nhắc nhở tự động + xem phản hồi của dòng đang chọn -->
+                <Button Command="{Binding NhacNhoCommand}"
+                        Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="36" Padding="12,0" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="BellRingOutline" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Nhắc nhở tự động" Margin="6,0,0,0" FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding XemPhanHoiCommand}"
+                        Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="36" Padding="12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="CommentTextMultipleOutline" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Xem phản hồi" Margin="6,0,0,0" FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Khách thuê: đánh dấu đã đọc + phản hồi chủ trọ -->
+                <Button Command="{Binding DocCommand}"
+                        Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVis}}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="36" Padding="12,0" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="CheckAll" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Đánh dấu đã đọc" Margin="6,0,0,0" FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding PhanHoiCommand}"
+                        Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVis}}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="36" Padding="12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="ReplyOutline" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Phản hồi" Margin="6,0,0,0" FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </ctl:CrudTable.ExtraActions>
+
+        <ctl:CrudTable.Columns>
+            <DataGridTextColumn Header="MÃ TB"      Binding="{Binding MaThongBao}" Width="0.6*" MinWidth="60"/>
+            <DataGridTextColumn Header="TIÊU ĐỀ"    Binding="{Binding TieuDe}"     Width="1.8*" MinWidth="180"/>
+            <DataGridTextColumn Header="NỘI DUNG"   Binding="{Binding NoiDung}"    Width="2.2*" MinWidth="200"/>
+            <DataGridTextColumn Header="LOẠI"       Binding="{Binding Loai}"       Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="NGÀY GỬI"   Binding="{Binding NgayGui}"    Width="1.1*" MinWidth="120"/>
+            <DataGridTextColumn Header="TIẾP NHẬN"  Binding="{Binding TrangThai}"  Width="1.3*" MinWidth="130"/>
+        </ctl:CrudTable.Columns>
+    </ctl:CrudTable>
+</UserControl>

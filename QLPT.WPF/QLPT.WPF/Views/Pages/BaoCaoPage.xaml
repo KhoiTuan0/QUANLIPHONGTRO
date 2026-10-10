@@ -1,0 +1,295 @@
+﻿<UserControl x:Class="QLPT.WPF.Views.Pages.BaoCaoPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+             xmlns:vm="clr-namespace:QLPT.WPF.ViewModels">
+    <UserControl.DataContext>
+        <vm:BaoCaoViewModel/>
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <!-- Thông báo khi biểu đồ không có dữ liệu -->
+        <Style x:Key="ChuTrong" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource Win11TextSecondaryBrush}"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+        </Style>
+        <Style x:Key="TrongDoanhThu" TargetType="TextBlock" BasedOn="{StaticResource ChuTrong}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CoDoanhThu}" Value="False">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="TrongCongNo" TargetType="TextBlock" BasedOn="{StaticResource ChuTrong}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CoCongNo}" Value="False">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="KhungBieuDo" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Win11SurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20,16,12,10"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="20,16,20,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,12" LastChildFill="False">
+            <Button DockPanel.Dock="Right" Command="{Binding XuatExcelCommand}"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Height="36" Padding="14,0"
+                    ToolTip="Xuất cả 4 bảng báo cáo ra file Excel (.xlsx)">
+                <StackPanel Orientation="Horizontal">
+                    <md:PackIcon Kind="MicrosoftExcel" Width="16" Height="16" VerticalAlignment="Center"/>
+                    <TextBlock Text="Xuất Excel" Margin="6,0,0,0" FontSize="13" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <Button DockPanel.Dock="Right" Command="{Binding LoadCommand}"
+                    Style="{StaticResource MaterialDesignIconButton}"
+                    ToolTip="Tải lại" Width="36" Height="36" Padding="0" Margin="0,0,6,0"
+                    Foreground="{DynamicResource Win11TextSecondaryBrush}">
+                <md:PackIcon Kind="Refresh" Width="18" Height="18"/>
+            </Button>
+        </DockPanel>
+
+        <!-- Error -->
+        <TextBlock Grid.Row="1" Text="{Binding ErrorMessage}" Foreground="Crimson"
+                   TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+        <!-- TabControl -->
+        <TabControl Grid.Row="2">
+
+            <!-- Tab 1: Tổng quan -->
+            <TabItem Header="Tổng quan">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                    <StackPanel>
+                    <UniformGrid Rows="2" Columns="4">
+                        <md:Card Margin="6" Padding="20" UniformCornerRadius="12">
+                            <StackPanel>
+                                <md:PackIcon Kind="Door" Width="28" Height="28" Foreground="#1565C0"/>
+                                <TextBlock Text="{Binding TongPhong}" FontSize="30" FontWeight="Bold"
+                                           Foreground="#1565C0" Margin="0,8,0,0"/>
+                                <TextBlock Text="Tổng phòng" Foreground="{DynamicResource Win11TextSecondaryBrush}" FontSize="12"/>
+                            </StackPanel>
+                        </md:Card>
+                        <md:Card Margin="6" Padding="20" UniformCornerRadius="12">
+                            <StackPanel>
+                                <md:PackIcon Kind="DoorOpen" Width="28" Height="28" Foreground="#2E7D32"/>
+                                <TextBlock Text="{Binding PhongTrong}" FontSize="30" FontWeight="Bold"
+                                           Foreground="#2E7D32" Margin="0,8,0,0"/>
+                                <TextBlock Text="Phòng trống" Foreground="{DynamicResource Win11TextSecondaryBrush}" FontSize="12"/>
+                            </StackPanel>
+                        </md:Card>
+                        <md:Card Margin="6" Padding="20" UniformCornerRadius="12">
+                            <StackPanel>
+                                <md:PackIcon Kind="AccountGroup" Width="28" Height="28" Foreground="#6A1B9A"/>
+                                <TextBlock Text="{Binding DangThue}" FontSize="30" FontWeight="Bold"
+                                           Foreground="#6A1B9A" Margin="0,8,0,0"/>
+                                <TextBlock Text="Đang thuê" Foreground="{DynamicResource Win11TextSecondaryBrush}" FontSize="12"/>
+                            </StackPanel>
+                        </md:Card>
+                        <md:Card Margin="6" Padding="20" UniformCornerRadius="12"
+                                 ToolTip="Người đang ở hoặc tạm vắng thuộc hợp đồng còn hiệu lực. Không tính khách đã trả phòng hay mới đặt cọc.">
+                            <StackPanel>
+                                <md:PackIcon Kind="AccountMultiple" Width="28" Height="28" Foreground="#E65100"/>
+                                <TextBlock Text="{Binding KhachDangO}" FontSize="30" FontWeight="Bold"
+                                           Foreground="#E65100" Margin="0,8,0,0"/>
+                                <TextBlock Foreground="{DynamicResource Win11TextSecondaryBrush}" FontSize="12">
+                                    <Run Text="Khách đang ở"/><Run Text="{Binding TongKhach, StringFormat=' · {0} hồ sơ', Mode=OneWay}"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </md:Card>
+                        <md:Card Margin="6" Padding="20" UniformCornerRadius="12">
+                            <StackPanel>
+                                <md:PackIcon Kind="FileDocument" Width="28" Height="28" Foreground="#00838F"/>
+                                <TextBlock Text="{Binding HdHieuLuc}" FontSize="30" FontWeight="Bold"
+                                           Foreground="#00838F" Margin="0,8,0,0"/>
+                                <TextBlock Text="HĐ hiệu lực" Foreground="{DynamicResource Win11TextSecondaryBrush}" FontSize="12"/>
+                            </StackPanel>
+                        </md:Card>
+                        <md:Card Margin="6" Padding="20" UniformCornerRadius="12">
+                            <StackPanel>
+                                <md:PackIcon Kind="CalendarAlert" Width="28" Height="28" Foreground="#F57F17"/>
+                                <TextBlock Text="{Binding SapHetHan}" FontSize="30" FontWeight="Bold"
+                                           Foreground="#F57F17" Margin="0,8,0,0"/>
+                                <TextBlock Text="Sắp hết hạn (30 ngày)" Foreground="{DynamicResource Win11TextSecondaryBrush}" FontSize="12"/>
+                            </StackPanel>
+                        </md:Card>
+                        <md:Card Margin="6" Padding="20" UniformCornerRadius="12">
+                            <StackPanel>
+                                <md:PackIcon Kind="CashMultiple" Width="28" Height="28" Foreground="#B71C1C"/>
+                                <TextBlock Text="{Binding CongNo}" FontSize="18" FontWeight="Bold"
+                                           Foreground="#B71C1C" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                <TextBlock Text="Công nợ chưa thu" Foreground="{DynamicResource Win11TextSecondaryBrush}" FontSize="12"/>
+                            </StackPanel>
+                        </md:Card>
+                        <md:Card Margin="6" Padding="20" UniformCornerRadius="12">
+                            <StackPanel>
+                                <md:PackIcon Kind="TrendingUp" Width="28" Height="28" Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding DoanhThu}" FontSize="18" FontWeight="Bold"
+                                           Foreground="#1B5E20" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                <TextBlock Text="Doanh thu tháng" Foreground="{DynamicResource Win11TextSecondaryBrush}" FontSize="12"/>
+                            </StackPanel>
+                        </md:Card>
+                    </UniformGrid>
+
+                    <!-- Biểu đồ: doanh thu 12 kỳ (cột chồng) + công nợ theo phòng (thanh ngang) -->
+                    <Grid Height="340" Margin="6,6,6,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="2*" MinWidth="300"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource KhungBieuDo}">
+                            <DockPanel>
+                                <DockPanel DockPanel.Dock="Top" Margin="0,0,8,6" LastChildFill="False">
+                                    <StackPanel DockPanel.Dock="Left">
+                                        <TextBlock Text="Doanh thu 12 kỳ gần nhất" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource Win11TextPrimaryBrush}"/>
+                                        <TextBlock Text="Tổng phát hành mỗi kỳ = đã thu + còn nợ · số liệu chi tiết ở tab Doanh thu theo kỳ"
+                                                   FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                                        <Border Width="10" Height="10" CornerRadius="2" VerticalAlignment="Center"
+                                                Background="{DynamicResource ChartSeries1Brush}"/>
+                                        <TextBlock Text="Đã thu" FontSize="12" Margin="6,0,14,0" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
+                                        <Border Width="10" Height="10" CornerRadius="2" VerticalAlignment="Center"
+                                                Background="{DynamicResource ChartSeries2Brush}"/>
+                                        <TextBlock Text="Còn nợ" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                                <Grid>
+                                    <lvc:CartesianChart Series="{Binding DoanhThuSeries}"
+                                                        XAxes="{Binding DoanhThuX}"
+                                                        YAxes="{Binding DoanhThuY}"
+                                                        LegendPosition="Hidden"
+                                                        TooltipPosition="Top"
+                                                        TooltipBackgroundPaint="{Binding TooltipNen}"
+                                                        TooltipTextPaint="{Binding TooltipChu}"
+                                                        TooltipTextSize="12"
+                                                        ZoomMode="None"/>
+                                    <TextBlock Text="Chưa có hóa đơn nào" Style="{StaticResource TrongDoanhThu}"/>
+                                </Grid>
+                            </DockPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource KhungBieuDo}">
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Top" Margin="0,0,8,6">
+                                    <TextBlock Text="Công nợ theo phòng" FontWeight="SemiBold" FontSize="13"
+                                               Foreground="{DynamicResource Win11TextPrimaryBrush}"/>
+                                    <TextBlock Text="Số tiền còn nợ của các hóa đơn chưa thu đủ, nhiều nhất ở trên"
+                                               FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
+                                </StackPanel>
+                                <Grid>
+                                    <lvc:CartesianChart Series="{Binding CongNoSeries}"
+                                                        XAxes="{Binding CongNoX}"
+                                                        YAxes="{Binding CongNoY}"
+                                                        LegendPosition="Hidden"
+                                                        TooltipPosition="Right"
+                                                        TooltipBackgroundPaint="{Binding TooltipNen}"
+                                                        TooltipTextPaint="{Binding TooltipChu}"
+                                                        TooltipTextSize="12"
+                                                        ZoomMode="None"/>
+                                    <TextBlock Text="Không có công nợ — mọi hóa đơn đã thu đủ" Style="{StaticResource TrongCongNo}"/>
+                                </Grid>
+                            </DockPanel>
+                        </Border>
+                    </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 2: HĐ sắp hết hạn -->
+            <TabItem Header="HĐ sắp hết hạn">
+                <md:Card Margin="0,12,0,0" UniformCornerRadius="12" Padding="0">
+                    <DataGrid ItemsSource="{Binding HopDongSapHetHan}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" GridLinesVisibility="Horizontal"
+                              HeadersVisibility="Column" BorderThickness="0"
+                              >
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mã HĐ"       Binding="{Binding MaHopDong}"   Width="0.8*" MinWidth="80"/>
+                            <DataGridTextColumn Header="Phòng"        Binding="{Binding TenPhong}"    Width="*"/>
+                            <DataGridTextColumn Header="Khách thuê"   Binding="{Binding HoTenKhach}"  Width="*"/>
+                            <DataGridTextColumn Header="Ngày bắt đầu" Binding="{Binding NgayBatDau}"  Width="1.3*" MinWidth="130"/>
+                            <DataGridTextColumn Header="Hết hạn"      Binding="{Binding NgayKetThuc}" Width="1.3*" MinWidth="130"/>
+                            <DataGridTextColumn Header="Còn lại (ngày)" Binding="{Binding ConLaiNgay}" Width="1*" MinWidth="100"/>
+                            <DataGridTextColumn Header="Trạng thái"   Binding="{Binding TrangThai}"   Width="1.2*" MinWidth="120"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </md:Card>
+            </TabItem>
+
+            <!-- Tab 3: Hóa đơn chưa thu -->
+            <TabItem Header="Hóa đơn chưa thu">
+                <md:Card Margin="0,12,0,0" UniformCornerRadius="12" Padding="0">
+                    <DataGrid ItemsSource="{Binding HoaDonChuaThu}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" GridLinesVisibility="Horizontal"
+                              HeadersVisibility="Column" BorderThickness="0"
+                              >
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mã HĐN"     Binding="{Binding MaHoaDon}"     Width="0.6*" MinWidth="60"/>
+                            <DataGridTextColumn Header="Mã HĐ"      Binding="{Binding MaHopDong}"    Width="0.6*" MinWidth="60"/>
+                            <DataGridTextColumn Header="Phòng"      Binding="{Binding TenPhong}"     Width="1*"   MinWidth="100"/>
+                            <DataGridTextColumn Header="Khách thuê" Binding="{Binding HoTenKhach}"   Width="1.3*" MinWidth="130"/>
+                            <DataGridTextColumn Header="Kỳ"         Binding="{Binding ThangNam}"     Width="0.8*" MinWidth="80"/>
+                            <DataGridTextColumn Header="Tổng tiền"  Binding="{Binding TongTien}"     Width="1.1*" MinWidth="110"/>
+                            <DataGridTextColumn Header="Đã thu"     Binding="{Binding DaThu}"        Width="1.1*" MinWidth="110"/>
+                            <DataGridTextColumn Header="Còn lại"    Binding="{Binding ConLai}"       Width="1.1*" MinWidth="110"/>
+                            <DataGridTextColumn Header="Hạn TT"     Binding="{Binding HanThanhToan}" Width="0.9*" MinWidth="95"/>
+                            <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}"    Width="1.2*" MinWidth="120"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </md:Card>
+            </TabItem>
+
+            <!-- Tab 4: Doanh thu theo kỳ — bảng số liệu của biểu đồ doanh thu -->
+            <TabItem Header="Doanh thu theo kỳ">
+                <md:Card Margin="0,12,0,0" UniformCornerRadius="12" Padding="0">
+                    <DataGrid ItemsSource="{Binding DoanhThuTheoKy}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" GridLinesVisibility="Horizontal"
+                              HeadersVisibility="Column" BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kỳ"             Binding="{Binding Ky}"    Width="0.8*" MinWidth="80"/>
+                            <DataGridTextColumn Header="Tổng phát hành" Binding="{Binding Tong}"  Width="1.2*" MinWidth="130"/>
+                            <DataGridTextColumn Header="Đã thu"         Binding="{Binding DaThu}" Width="1.2*" MinWidth="130"/>
+                            <DataGridTextColumn Header="Còn nợ"         Binding="{Binding ConNo}" Width="1.2*" MinWidth="130"/>
+                            <DataGridTextColumn Header="Tỷ lệ thu"      Binding="{Binding TyLe}"  Width="0.8*" MinWidth="90"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </md:Card>
+            </TabItem>
+        </TabControl>
+
+        <!-- Loading overlay -->
+        <Grid Grid.RowSpan="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+            <Border Background="{DynamicResource Win11ContentBrush}" Opacity="0.6"/>
+            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                         IsIndeterminate="True" Width="48" Height="48"
+                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
+    </Grid>
+</UserControl>
+
