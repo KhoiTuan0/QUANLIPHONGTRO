@@ -119,13 +119,13 @@ public static class NghiepVu
         if (soTien <= 0) return;
         ctx.PhieuThuChis.Add(new PhieuThuChi
         {
-            LoaiPhieu    = loai,
-            NgayLap      = DateTime.Now,
-            NoiDung      = noiDung,
-            SoTien       = soTien,
+            LoaiPhieu = loai,
+            NgayLap = DateTime.Now,
+            NoiDung = noiDung,
+            SoTien = soTien,
             NguoiNopNhan = nguoiNopNhan,
-            GhiChu       = ghiChu,
-            TrangThai    = PhieuHoanTat
+            GhiChu = ghiChu,
+            TrangThai = PhieuHoanTat
         });
     }
 
@@ -144,11 +144,11 @@ public static class NghiepVu
 
         var tb = new ThongBaoModel
         {
-            TieuDe       = tieuDe,
-            NoiDung      = noiDung,
+            TieuDe = tieuDe,
+            NoiDung = noiDung,
             LoaiThongBao = loai,
-            NgayTao      = DateTime.Now,
-            TrangThai    = ThongBao.DaGui
+            NgayTao = DateTime.Now,
+            TrangThai = ThongBao.DaGui
         };
         foreach (var id in nguoiNhan)
             tb.ThongBaoNguoiNhans.Add(new ThongBaoNguoiNhan { MaTaiKhoan = id, DaDoc = false });

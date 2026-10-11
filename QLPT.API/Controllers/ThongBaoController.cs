@@ -44,7 +44,7 @@ public class ThongBaoController : ControllerBase
                 .GroupBy(id => id!.Value).ToDictionary(g => g.Key, g => g.Count());
 
             var list = await _ctx.ThongBaos
-                .Where(t => t.LoaiThongBao != NghiepVu.ThongBao.LoaiPhanHoi)
+                .Where(t => t.LoaiThongBao != NghiepVu.ThongBao.LoaiPhanHoi && t.LoaiThongBao != "Tin nhắn")
                 .Select(t => new
                 {
                     maThongBao  = t.MaThongBao,
@@ -75,7 +75,7 @@ public class ThongBaoController : ControllerBase
         try
         {
             var list = await _ctx.ThongBaoNguoiNhans
-                .Where(n => n.MaTaiKhoan == maTaiKhoan)
+                .Where(n => n.MaTaiKhoan == maTaiKhoan && n.MaThongBaoNavigation.LoaiThongBao != "Tin nhắn")
                 .Include(n => n.MaThongBaoNavigation)
                 .OrderByDescending(n => n.MaThongBaoNavigation != null ? n.MaThongBaoNavigation.NgayTao : null)
                 .Select(n => new {
