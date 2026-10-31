@@ -1,6 +1,7 @@
-﻿<Window x:Class="QLPT.WPF.Views.Dialogs.PhongDialog"
+<Window x:Class="QLPT.WPF.Views.Dialogs.PhongDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctl="clr-namespace:QLPT.WPF.Controls"
         xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:svc="clr-namespace:QLPT.WPF.Services"
         Title="Phòng" Style="{StaticResource Win10Dialog}" Width="480" SizeToContent="Height"
@@ -15,6 +16,10 @@
             <TextBlock x:Name="TxtTitle" Text="Thêm phòng" FontSize="18" FontWeight="Bold"
                        Foreground="{DynamicResource Win11TextPrimaryBrush}" Margin="0,0,0,20"/>
 
+            <TextBlock x:Name="TxtHistoryNotice" Visibility="Collapsed" TextWrapping="Wrap"
+                       Foreground="{DynamicResource Win11TextSecondaryBrush}" Margin="0,0,0,14"
+                       Text="Phòng đã từng có hợp đồng hoặc phiếu đặt. Tên, loại phòng, cơ sở và tầng được giữ cố định để bảo toàn lịch sử; bạn vẫn có thể sửa giá thuê, trạng thái hợp lệ và mô tả."/>
+
             <TextBox x:Name="TxtTenPhong" MaxLength="50" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Tên phòng *"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,12"/>
 
@@ -24,10 +29,8 @@
                     <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBox Grid.Column="0" x:Name="TxtMaLoaiPhong" MaxLength="9" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Mã loại phòng *"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                <TextBox Grid.Column="2" x:Name="TxtMaCoSo" MaxLength="9" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Mã cơ sở *"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                <ctl:EntityPicker Grid.Column="0" x:Name="PickMaLoaiPhong" Source="LoaiPhong" Hint="Loại phòng *" SearchHint="Tìm tên loại phòng hoặc mã" Margin="0,0,0,12"/>
+                <ctl:EntityPicker Grid.Column="2" x:Name="PickMaCoSo" Source="CoSo" Hint="Cơ sở *" SearchHint="Tìm tên cơ sở hoặc mã" Margin="0,0,0,12"/>
             </Grid>
 
             <Grid Margin="0,0,0,12">
@@ -36,7 +39,7 @@
                     <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBox Grid.Column="0" x:Name="TxtGiaThue" svc:MoneyInput.IsEnabled="True" md:HintAssist.Hint="Giá thuê"
+                <TextBox Grid.Column="0" x:Name="TxtGiaThue" svc:MoneyInput.IsEnabled="True" md:HintAssist.Hint="Giá thuê (từ 100.000 đ) *"
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                 <TextBox Grid.Column="2" x:Name="TxtTang" MaxLength="3" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Tầng *"
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"/>

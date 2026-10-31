@@ -26,4 +26,6 @@ public partial class CuTru
     public virtual HopDong MaHopDongNavigation { get; set; } = null!;
 
     public virtual KhachThue MaKhachNavigation { get; set; } = null!;
+
+    public virtual ICollection<KhaiBaoCuTru> KhaiBaoCuTrus { get; set; } = new List<KhaiBaoCuTru>();
 }

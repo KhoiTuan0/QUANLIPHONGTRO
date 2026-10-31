@@ -36,12 +36,12 @@ public partial class TinhTrangDialog : Window
 
         try
         {
-            IsEnabled = false;
+            using var saveGuard = new DialogSaveGuard(this);
             await ApiClient.PutAsync($"/api/TaiSan/phong/{_maTaiSanPhong}", new { tinhTrang });
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex) { ShowError(ex.Message); }
-        finally { IsEnabled = true; }
     }
 
     private void ShowError(string msg)

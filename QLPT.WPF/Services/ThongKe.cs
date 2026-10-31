@@ -17,6 +17,33 @@ public static class ThongKe
     private static decimal Dec(JsonElement e, string ten) =>
         decimal.TryParse(ApiClient.ElStr(e, ten), NumberStyles.Any, CultureInfo.InvariantCulture, out var d) ? d : 0;
 
+    /// <summary>Thống kê theo kỳ hóa đơn trong khoảng tháng được chọn, kể cả tháng không phát sinh.</summary>
+    public static List<KyDoanhThu> TheoKhoang(JsonElement hoaDons, DateTime tuNgay, DateTime denNgay)
+    {
+        int dau = tuNgay.Year * 12 + tuNgay.Month - 1;
+        int cuoi = denNgay.Year * 12 + denNgay.Month - 1;
+        if (cuoi < dau || cuoi - dau >= 120) return new();
+        var nhom = new Dictionary<(int Nam, int Thang), (decimal Tong, decimal DaThu, decimal ConNo)>();
+        if (hoaDons.ValueKind == JsonValueKind.Array)
+            foreach (var h in hoaDons.EnumerateArray())
+            {
+                if (!int.TryParse(ApiClient.ElStr(h, "thang"), out int t) ||
+                    !int.TryParse(ApiClient.ElStr(h, "nam"), out int n) || t is < 1 or > 12) continue;
+                int ky = n * 12 + t - 1;
+                if (ky < dau || ky > cuoi) continue;
+                var cu = nhom.GetValueOrDefault((n, t));
+                nhom[(n, t)] = (cu.Tong + Dec(h, "tongTien"), cu.DaThu + Dec(h, "daThanhToan"), cu.ConNo + Dec(h, "conLai"));
+            }
+        var ds = new List<KyDoanhThu>();
+        for (int ky = dau; ky <= cuoi; ky++)
+        {
+            int nam = ky / 12, thang = ky % 12 + 1;
+            var v = nhom.GetValueOrDefault((nam, thang));
+            ds.Add(new KyDoanhThu(nam, thang, v.Tong, v.DaThu, v.ConNo));
+        }
+        return ds;
+    }
+
     /// <summary>
     /// Gộp hóa đơn theo kỳ (tháng/năm), lấy N kỳ gần nhất. Tháng trống ở giữa vẫn được
     /// điền 0 để trục thời gian không "nhảy cóc" làm sai cảm nhận xu hướng.

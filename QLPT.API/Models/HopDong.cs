@@ -5,6 +5,8 @@ namespace QLPT.API.Models;
 
 public partial class HopDong
 {
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public int? MaKhachCuTru { get; set; }
     public int MaHopDong { get; set; }
 
     public int MaPhong { get; set; }

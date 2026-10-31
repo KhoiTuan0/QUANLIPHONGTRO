@@ -24,7 +24,11 @@ public partial class SuaChuaViewModel : BaseViewModel
                 list.Add(new SuaChuaItem
                 {
                     MaSuaChua     = ApiClient.ElStr(item, "maYeuCau"),
+                    MaPhong       = ApiClient.ElStr(item, "maPhong"),
                     MaHopDong     = ApiClient.ElStr(item, "maHopDong"),
+                    TenPhong      = LookupData.Display(ApiClient.ElStr(item, "tenPhong"), ApiClient.ElStr(item, "maPhong")),
+                    MaDinhDanhHienVat = ApiClient.ElStr(item, "maDinhDanhHienVat"),
+                    HoTenKhach    = LookupData.Display(ApiClient.ElStr(item, "hoTenKhach"), ApiClient.ElStr(item, "maKhach")),
                     MoTa          = ApiClient.ElStr(item, "noiDung"),
                     NgayYeuCau    = ApiClient.ElStr(item, "ngayBao"),
                     NgayHoanThanh = ApiClient.ElStr(item, "ngayHoanThanh"),
@@ -57,6 +61,9 @@ public partial class SuaChuaViewModel : BaseViewModel
     private async Task XoaAsync()
     {
         if (SelectedItem == null) { ErrorMessage = "Chọn yêu cầu cần xóa."; return; }
+        if (SelectedItem.TrangThai != "Chờ tiếp nhận" ||
+            VnMoney.Parse(SelectedItem.ChiPhi) > 0)
+        { ErrorMessage = "Chỉ xóa được yêu cầu chờ tiếp nhận và chưa phát sinh chi phí."; return; }
         await RunSafeAsync(async () =>
             await ApiClient.DeleteAsync($"/api/SuaChua/{SelectedItem.MaSuaChua}"));
         if (string.IsNullOrEmpty(ErrorMessage))
@@ -67,7 +74,11 @@ public partial class SuaChuaViewModel : BaseViewModel
 public class SuaChuaItem
 {
     public string MaSuaChua     { get; set; } = "";
+    public string MaPhong       { get; set; } = "";
     public string MaHopDong     { get; set; } = "";
+    public string TenPhong      { get; set; } = "";
+    public string MaDinhDanhHienVat { get; set; } = "";
+    public string HoTenKhach    { get; set; } = "";
     public string MoTa          { get; set; } = "";
     public string NgayYeuCau    { get; set; } = "";
     public string NgayHoanThanh { get; set; } = "";

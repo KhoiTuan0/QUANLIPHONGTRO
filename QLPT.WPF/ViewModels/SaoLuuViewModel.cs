@@ -3,11 +3,14 @@ using CommunityToolkit.Mvvm.Input;
 using QLPT.WPF.Services;
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using System.Windows;
 
 namespace QLPT.WPF.ViewModels;
 
 public partial class SaoLuuViewModel : BaseViewModel
 {
+    private const string FileGuidance = "Tệp .bak nằm trên máy SQL Server. Quản lý và xóa tệp tại thư mục sao lưu của máy SQL Server; danh sách này là lịch sử sao lưu.";
+    private const string UnavailableGuidance = "Sao lưu chưa sẵn sàng. Kiểm tra thư mục sao lưu mặc định của SQL Server hoặc Backups:SqlServerDirectory, quyền ghi của dịch vụ SQL Server và quyền đọc lịch sử trong msdb.";
     [ObservableProperty] private ObservableCollection<SaoLuuItem> _items = new();
     [ObservableProperty] private SaoLuuItem? _selectedItem;
     [ObservableProperty] private string _infoMessage = "";
@@ -17,9 +20,12 @@ public partial class SaoLuuViewModel : BaseViewModel
     [RelayCommand]
     private async Task LoadAsync() => await RunSafeAsync(async () =>
     {
-        InfoMessage = "";
-        var (el, ok, friendly) = await TryGetBackupListAsync();
-        if (!ok) { InfoMessage = friendly; Items = new(); return; }
+        InfoMessage = FileGuidance;
+        JsonElement el;
+        try { el = await ApiClient.GetRawAsync("/api/SaoLuu"); }
+        catch (ApiResponseException ex) when (ex.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+        { InfoMessage = UnavailableGuidance; Items = new(); return; }
+        if (el.ValueKind != JsonValueKind.Array) throw new Exception("Máy chủ trả danh sách sao lưu không đúng định dạng.");
 
         var list = new List<SaoLuuItem>();
         if (el.ValueKind == JsonValueKind.Array)
@@ -28,8 +34,11 @@ public partial class SaoLuuViewModel : BaseViewModel
                 {
                     Id        = ApiClient.ElStr(item, "id", "maSaoLuu"),
                     FileName  = ApiClient.ElStr(item, "fileName", "tenFile"),
-                    NgayTao   = ApiClient.ElStr(item, "ngayTao", "createdAt"),
+                    NgayTao   = DateTime.TryParse(ApiClient.ElStr(item, "ngayTao", "createdAt"), out var created)
+                        ? created.ToString("dd/MM/yyyy HH:mm") : ApiClient.ElStr(item, "ngayTao", "createdAt"),
                     KichThuoc = ApiClient.ElStr(item, "kichThuoc", "size"),
+                    DuongDan  = ApiClient.ElStr(item, "duongDan"),
+                    TrangThai = ApiClient.ElStr(item, "trangThai"),
                 });
         Items = new ObservableCollection<SaoLuuItem>(list);
     });
@@ -40,59 +49,44 @@ public partial class SaoLuuViewModel : BaseViewModel
         await RunSafeAsync(async () =>
         {
             InfoMessage = "";
-            bool done = false;
-            foreach (var url in new[] { "/api/SaoLuu/tao", "/api/Backup/create" })
+            JsonElement result;
+            try { result = await ApiClient.PostLongAsync("/api/SaoLuu/tao", new { }); }
+            catch (ApiResponseException ex) when (ex.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
             {
-                try { await ApiClient.PostAsync(url, new { }); done = true; break; }
-                catch (Exception ex) when (IsNotFound(ex)) { /* try next */ }
+                InfoMessage = UnavailableGuidance;
+                return;
             }
-            if (!done) InfoMessage = "Chức năng sao lưu chưa được hỗ trợ bởi API.";
-        });
-        if (string.IsNullOrEmpty(ErrorMessage) && string.IsNullOrEmpty(InfoMessage))
             await LoadAsync();
+            InfoMessage = $"{ApiClient.ElStr(result, "message")}\n{ApiClient.ElStr(result, "duongDan")}\n{InfoMessage}";
+        });
     }
 
     [RelayCommand]
-    private async Task XoaAsync()
+    private async Task KhoiPhucBanSaoAsync()
     {
-        if (SelectedItem == null) { ErrorMessage = "Chọn bản sao lưu cần xóa."; return; }
+        if (SelectedItem == null || !KiemTra.Ma(SelectedItem.Id, out _))
+        { ErrorMessage = "Chọn một bản sao lưu trong danh sách."; return; }
+        string id = SelectedItem.Id;
+        string name = SelectedItem.FileName;
+        if (MessageBox.Show($"Khôi phục {name} thành một CSDL mới trên máy SQL Server?\n\n" +
+            "CSDL đang dùng sẽ không bị ghi đè. Cần đủ dung lượng đĩa và quyền khôi phục SQL.",
+            "Khôi phục bản sao", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         await RunSafeAsync(async () =>
         {
-            InfoMessage = "";
-            bool done = false;
-            foreach (var url in new[]
-                { $"/api/SaoLuu/{SelectedItem.Id}", $"/api/Backup/{SelectedItem.Id}" })
-            {
-                try { await ApiClient.DeleteAsync(url); done = true; break; }
-                catch (Exception ex) when (IsNotFound(ex)) { /* try next */ }
-            }
-            if (!done) InfoMessage = "Chức năng sao lưu chưa được hỗ trợ bởi API.";
+            var result = await ApiClient.PostLongAsync($"/api/SaoLuu/{id}/khoi-phuc-ban-sao", new { });
+            InfoMessage = ApiClient.ElStr(result, "message") +
+                " Nếu cần dùng CSDL này, kiểm tra và đổi chuỗi kết nối API theo quy trình triển khai.";
         });
-        if (string.IsNullOrEmpty(ErrorMessage))
-            await LoadAsync();
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────
-
-    private static async Task<(JsonElement el, bool ok, string friendly)>
-        TryGetBackupListAsync()
+    [RelayCommand]
+    private void SaoChepDuongDan()
     {
-        foreach (var url in new[] { "/api/SaoLuu", "/api/Backup" })
-        {
-            try
-            {
-                var el = await ApiClient.GetRawAsync(url);
-                return (el, true, "");
-            }
-            catch (Exception ex) when (IsNotFound(ex)) { /* try next */ }
-            catch { /* other error — fall through to friendly */ }
-        }
-        return (default, false, "Chức năng sao lưu chưa được hỗ trợ bởi API.");
+        if (string.IsNullOrWhiteSpace(SelectedItem?.DuongDan))
+        { ErrorMessage = "Chọn bản sao lưu có đường dẫn để sao chép."; return; }
+        try { Clipboard.SetText(SelectedItem.DuongDan); ErrorMessage = ""; }
+        catch { ErrorMessage = "Không thể sao chép đường dẫn vào bộ nhớ tạm."; }
     }
-
-    private static bool IsNotFound(Exception ex)
-        => ex.Message.Contains("404") || ex.Message.Contains("Not Found",
-               StringComparison.OrdinalIgnoreCase);
 }
 
 public class SaoLuuItem
@@ -101,4 +95,6 @@ public class SaoLuuItem
     public string FileName  { get; set; } = "";
     public string NgayTao   { get; set; } = "";
     public string KichThuoc { get; set; } = "";
+    public string DuongDan { get; set; } = "";
+    public string TrangThai { get; set; } = "";
 }

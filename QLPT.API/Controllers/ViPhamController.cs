@@ -26,13 +26,11 @@ public class ViPhamController : ControllerBase
                     tenPhong     = v.MaPhongNavigation.TenPhong,
                     maKhach      = v.MaKhach,
                     tenKhach     = v.MaKhachNavigation.HoTen,
-                    // Bảng không lưu hợp đồng; lấy hợp đồng gần nhất của phòng.
-                    maHopDong    = _ctx.HopDongs.Where(h => h.MaPhong == v.MaPhong)
-                                       .OrderByDescending(h => h.NgayBatDau)
-                                       .Select(h => (int?)h.MaHopDong).FirstOrDefault(),
                     noiDung      = v.NoiDung,
                     ngayViPham   = v.NgayViPham,
                     tienPhat     = v.TienPhat,
+                    duocTinhHoaDon = v.DuocTinhHoaDon,
+                    maHoaDon = _ctx.ChiTietHoaDons.Where(c => c.MaViPham == v.MaViPham).Select(c => (int?)c.MaHoaDon).FirstOrDefault(),
                     hinhThucXuLy = v.HinhThucXuLy,
                     trangThai    = v.TrangThai
                 })
@@ -53,6 +51,10 @@ public class ViPhamController : ControllerBase
         {
             var hd = await _ctx.HopDongs.FindAsync(maHd);
             if (hd == null) return NotFound(new { success = false, message = $"Không tìm thấy hợp đồng #{maHd}." });
+            if (dto.MaPhong is int phongDuocGui && phongDuocGui != hd.MaPhong)
+                return BadRequest(new { success = false, message = "Phòng được gửi không thuộc hợp đồng đã chọn." });
+            if (dto.MaKhach is int khachDuocGui && khachDuocGui != hd.MaKhachDaiDien)
+                return BadRequest(new { success = false, message = "Khách được gửi không phải khách đại diện của hợp đồng đã chọn." });
             maPhong = hd.MaPhong;
             if (maKhach <= 0) maKhach = hd.MaKhachDaiDien;
         }
@@ -108,12 +110,8 @@ public class ViPhamController : ControllerBase
             vp.TienPhat     = dto.TienPhat ?? vp.TienPhat;
             vp.TrangThai    = NghiepVu.ViPham.DaXuLy;
 
-            // Tiền phạt vào sổ thu chi, đúng mẫu dữ liệu gốc ("Thu tiền phạt vi phạm - Phòng C102").
-            // Trước đây chỉ lưu trên bản ghi vi phạm nên Sổ thu chi không thấy khoản thu này.
-            if (vp.TienPhat is > 0)
-                NghiepVu.GhiPhieu(_ctx, NghiepVu.PhieuThu,
-                    $"Thu tiền phạt vi phạm - {vp.MaPhongNavigation?.TenPhong ?? $"phòng #{vp.MaPhong}"}",
-                    vp.TienPhat.Value, vp.MaKhachNavigation?.HoTen, $"Vi phạm #{vp.MaViPham}");
+            // Xử lý chỉ chốt mức phạt; chưa có thao tác nhận tiền. Không ghi phiếu thu
+            // trước khi thực sự thu, tránh doanh thu ảo và thu trùng nếu sau này đưa phạt vào hóa đơn.
 
             bool daGui = false;
             if (dto.GuiThongBao && await NghiepVu.TaiKhoanCuaKhachAsync(_ctx, vp.MaKhach) is int tk)
@@ -145,10 +143,16 @@ public class ViPhamController : ControllerBase
         {
             var item = await _ctx.ViPhams.FindAsync(id);
             if (item == null) return NotFound(new { message = "Không tìm thấy vi phạm" });
-            item.TrangThai     = model.TrangThai     ?? item.TrangThai;
+            if (item.TrangThai == NghiepVu.ViPham.DaXuLy)
+                return BadRequest(new { message = "Vi phạm đã xử lý không thể sửa vì khách đã có thể nhận thông báo." });
+            if (model.TrangThai != null && model.TrangThai != NghiepVu.ViPham.ChuaXuLy)
+                return BadRequest(new { message = "Dùng chức năng Xử lý để chốt vi phạm và gửi thông báo." });
+            if (model.TienPhat is < 0 || model.NoiDung != null &&
+                (string.IsNullOrWhiteSpace(model.NoiDung) || model.NoiDung.Trim().Length > 500))
+                return BadRequest(new { message = "Tiền phạt hoặc nội dung vi phạm không hợp lệ." });
             item.HinhThucXuLy  = model.HinhThucXuLy  ?? item.HinhThucXuLy;
             item.TienPhat      = model.TienPhat       ?? item.TienPhat;
-            item.NoiDung       = model.NoiDung        ?? item.NoiDung;
+            item.NoiDung       = model.NoiDung?.Trim() ?? item.NoiDung;
             await _ctx.SaveChangesAsync();
             return Ok(new { success = true, message = "Cập nhật thành công" });
         }
@@ -162,6 +166,8 @@ public class ViPhamController : ControllerBase
         {
             var item = await _ctx.ViPhams.FindAsync(id);
             if (item == null) return NotFound(new { message = "Không tìm thấy vi phạm" });
+            if (item.TrangThai == NghiepVu.ViPham.DaXuLy)
+                return BadRequest(new { message = "Vi phạm đã xử lý không thể xóa để giữ lịch sử và thông báo đã gửi." });
             _ctx.ViPhams.Remove(item);
             await _ctx.SaveChangesAsync();
             return Ok(new { success = true, message = "Xóa thành công" });

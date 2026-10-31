@@ -8,7 +8,7 @@ namespace QLPT.WPF.Services;
 
 public static class AppConfig
 {
-    public static string ApiBaseUrl = "http://localhost:5000";
+    public static string ApiBaseUrl = "http://localhost:5180";
 }
 
 public static class Session
@@ -18,6 +18,8 @@ public static class Session
     public static string TenDangNhap { get; set; } = "";
     public static string VaiTro { get; set; } = "Customer";
     public static bool IsAdmin => string.Equals(VaiTro, "Admin", StringComparison.OrdinalIgnoreCase);
+    public static bool IsManager => string.Equals(VaiTro, "Manager", StringComparison.OrdinalIgnoreCase);
+    public static bool IsBackupOperator => string.Equals(VaiTro, "BackupOperator", StringComparison.OrdinalIgnoreCase);
     public static bool IsLoggedIn => MaTaiKhoan.HasValue;
     public static HashSet<int> OwnContractIds { get; } = new();
     public static void Logout()
@@ -183,6 +185,35 @@ public static class ApiClient
         return ElStr(data, "duongDanAnh");
     }
 
+    public static async Task<string?> ReadMeterWithAiAsync(byte[] croppedPng, byte[] overviewJpeg, int digitCount)
+    {
+        const string url = "/api/OcrChiSoDien";
+        RequireUiPermission(url, true);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(55));
+        using var content = new MultipartFormDataContent();
+        var crop = new ByteArrayContent(croppedPng);
+        crop.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        content.Add(crop, "crop", "number.png");
+        var overview = new ByteArrayContent(overviewJpeg);
+        overview.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+        content.Add(overview, "overview", "meter.jpg");
+        content.Add(new StringContent(digitCount.ToString(System.Globalization.CultureInfo.InvariantCulture)), "digitCount");
+        try
+        {
+            using var response = await _http.PostAsync(url, content, timeout.Token);
+            string text = await response.Content.ReadAsStringAsync(timeout.Token);
+            var data = ReadJsonResponse(response, text, "POST", url);
+            string suggestion = ElStr(data, "suggestion");
+            return string.IsNullOrWhiteSpace(suggestion) ? null : suggestion;
+        }
+        catch (ApiResponseException ex) when (ex.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+        { throw new Exception("Máy API chưa cấu hình GEMINI_API_KEY hoặc OPENAI_API_KEY. Bạn vẫn có thể nhập chỉ số bằng tay.", ex); }
+        catch (HttpRequestException ex)
+        { throw new Exception("Không kết nối được API để đọc ảnh bằng AI. Bạn vẫn có thể nhập chỉ số bằng tay.", ex); }
+        catch (OperationCanceledException ex)
+        { throw new Exception("Dịch vụ AI phản hồi quá chậm. Bạn vẫn có thể nhập chỉ số bằng tay.", ex); }
+    }
+
     public static async Task<byte[]> GetImageAsync(string path)
     {
         RequireUiPermission(path, false);
@@ -221,6 +252,24 @@ public static class ApiClient
         if (url.StartsWith("/api/Auth/", StringComparison.OrdinalIgnoreCase)) return;
         if (!Session.IsLoggedIn) throw new UnauthorizedAccessException("Vui lòng đăng nhập.");
         if (Session.IsAdmin) return;
+        if (Session.IsBackupOperator)
+        {
+            if (url.Equals("/api/SaoLuu", StringComparison.OrdinalIgnoreCase) ||
+                writes && url.Equals("/api/SaoLuu/tao", StringComparison.OrdinalIgnoreCase)) return;
+            throw new UnauthorizedAccessException("Tài khoản sao lưu chỉ được xem và tạo bản sao lưu.");
+        }
+        if (Session.IsManager)
+        {
+            if (url.Equals($"/api/ThongBao/customer/{Session.MaTaiKhoan}", StringComparison.OrdinalIgnoreCase) ||
+                writes && url.EndsWith($"/doc/{Session.MaTaiKhoan}", StringComparison.OrdinalIgnoreCase) &&
+                url.StartsWith("/api/ThongBao/", StringComparison.OrdinalIgnoreCase)) return;
+            var allowed = new[] { "/api/OcrChiSoDien", "/api/CoSo", "/api/LoaiPhong", "/api/HopDong", "/api/KhachThue",
+                "/api/DatPhong", "/api/HoaDon", "/api/BanGiao", "/api/ChiSoDienNuoc", "/api/DanhMucMoRong",
+                "/api/Phong", "/api/TaiSan", "/api/SuaChua" };
+            if (allowed.Any(prefix => url.Equals(prefix, StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase))) return;
+            throw new UnauthorizedAccessException("Tài khoản quản lý chỉ thao tác tại cơ sở được phân công.");
+        }
         if (writes)
         {
             var parts = url.Split('/', StringSplitOptions.RemoveEmptyEntries);

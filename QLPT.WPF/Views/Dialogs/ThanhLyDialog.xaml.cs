@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using QLPT.WPF.Services;
 
 namespace QLPT.WPF.Views.Dialogs;
@@ -9,13 +9,13 @@ public partial class ThanhLyDialog : Window
     private readonly decimal _tienNo;
     private readonly decimal _tienCoc;
 
-    public ThanhLyDialog(string maHopDong, decimal tienCoc, decimal tongNo)
+    public ThanhLyDialog(string maHopDong, decimal tienCoc, decimal tongNo, string? thongTin = null)
     {
         InitializeComponent();
         _maHopDong = maHopDong;
         _tienNo = tongNo;
         _tienCoc = tienCoc;
-        TxtInfo.Text = $"Mã HĐ: {maHopDong}  |  Tiền cọc: {VnMoney.FormatD(tienCoc)}  |  Tổng nợ hóa đơn: {VnMoney.FormatD(tongNo)}";
+        TxtInfo.Text = $"HĐ #{maHopDong} · {thongTin}  |  Tiền cọc: {VnMoney.FormatD(tienCoc)}  |  Tổng nợ hóa đơn: {VnMoney.FormatD(tongNo)}";
         TxtTienHoanCoc.Text = VnMoney.Format(tienCoc);
         TxtTienNo.Text = VnMoney.Format(tongNo);
         TxtTienPhat.Text = "0";
@@ -50,7 +50,7 @@ public partial class ThanhLyDialog : Window
 
         try
         {
-            IsEnabled = false;
+            using var saveGuard = new DialogSaveGuard(this);
             await ApiClient.PostAsync($"/api/HopDong/{_maHopDong}/thanh-ly", new
             {
                 tienHoanCoc = hoanCoc,
@@ -58,10 +58,10 @@ public partial class ThanhLyDialog : Window
                 tienPhat = phat,
                 ghiChu = TxtGhiChu.Text.Trim()
             });
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex) { ShowError(ex.Message); }
-        finally { IsEnabled = true; }
     }
 
     private void ShowError(string msg)

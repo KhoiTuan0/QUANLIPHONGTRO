@@ -1,4 +1,4 @@
-﻿using QLPT.WPF.Services;
+using QLPT.WPF.Services;
 using System.Windows;
 
 namespace QLPT.WPF.Views.Dialogs;
@@ -9,15 +9,17 @@ public partial class SuaChuaDialog : Window
     {
         InitializeComponent();
         DpNgayYeuCau.SelectedDate = DateTime.Today;
+        DpNgayYeuCau.DisplayDateStart = DateTime.Today;
+        DpNgayYeuCau.DisplayDateEnd = DateTime.Today;
     }
 
     private async void BtnSave_Click(object sender, RoutedEventArgs e)
     {
         TxtError.Text = "";
 
-        if (!KiemTra.Ma(TxtMaHopDong.Text, out int maHopDong))
+        if (!PickMaHopDong.TryGetSelectedId(out int maHopDong))
         {
-            TxtError.Text = "Mã hợp đồng phải là số nguyên dương."; return;
+            TxtError.Text = "Vui lòng chọn hợp đồng từ danh sách đã tải."; return;
         }
         if (string.IsNullOrWhiteSpace(TxtMoTa.Text))
         {
@@ -27,20 +29,22 @@ public partial class SuaChuaDialog : Window
         {
             TxtError.Text = "Chọn ngày yêu cầu."; return;
         }
-        if (!KiemTra.KhongTuongLai(DpNgayYeuCau.SelectedDate))
+        if (DpNgayYeuCau.SelectedDate.Value.Date != DateTime.Today)
         {
-            TxtError.Text = "Ngày yêu cầu không được sau hôm nay."; return;
+            TxtError.Text = "Yêu cầu sửa chữa mới phải ghi ngày hôm nay."; return;
         }
 
         BtnSave.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             await ApiClient.PostAsync("/api/SuaChua", new
             {
                 maHopDong,
                 moTa       = TxtMoTa.Text.Trim(),
                 ngayYeuCau = DpNgayYeuCau.SelectedDate.Value.ToString("yyyy-MM-dd"),
             });
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)

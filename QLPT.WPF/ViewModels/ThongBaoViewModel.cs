@@ -18,6 +18,7 @@ public partial class ThongBaoViewModel : BaseViewModel
 
     public bool IsAdmin    => Session.IsAdmin;
     public bool IsNotAdmin => !Session.IsAdmin;
+    public bool IsCustomer => !Session.IsAdmin && !Session.IsManager && !Session.IsBackupOperator;
 
     public ThongBaoViewModel() => _ = LoadAsync();
 

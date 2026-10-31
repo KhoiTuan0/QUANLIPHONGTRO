@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLPT.API.Models;
 using QLPT.API.Services;
+using System.Security.Claims;
 
 namespace QLPT.API.Controllers;
 
@@ -20,7 +21,11 @@ public class HopDongController : ControllerBase
     {
         try
         {
-            var list = await _ctx.HopDongs
+            var query = _ctx.HopDongs.AsQueryable();
+            if (User.IsInRole("Manager") && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int managerId))
+                query = query.Where(h => h.MaPhongNavigation.MaCoSo.HasValue &&
+                    _ctx.QuanLyCoSos.Any(a => a.MaTaiKhoan == managerId && a.MaCoSo == h.MaPhongNavigation.MaCoSo.Value));
+            var list = await query
                 .Include(h => h.MaPhongNavigation)
                 .Include(h => h.MaKhachDaiDienNavigation)
                 .Select(h => new {
@@ -59,11 +64,13 @@ public class HopDongController : ControllerBase
                     tenPhong       = x.MaPhongNavigation != null ? x.MaPhongNavigation.TenPhong : "",
                     maKhachDaiDien = x.MaKhachDaiDien,
                     hoTenKhach     = x.MaKhachDaiDienNavigation != null ? x.MaKhachDaiDienNavigation.HoTen : "",
+                    ngayKy         = x.NgayKy,
                     ngayBatDau     = x.NgayBatDau,
                     ngayKetThuc    = x.NgayKetThuc,
                     giaThueThang   = x.GiaThueThang,
                     tienCoc        = x.TienCoc,
-                    trangThai      = x.TrangThai
+                    trangThai      = x.TrangThai,
+                    ghiChu         = x.GhiChu
                 })
                 .FirstOrDefaultAsync();
             if (h == null) return NotFound(new { message = "Không tìm thấy hợp đồng" });
@@ -75,10 +82,18 @@ public class HopDongController : ControllerBase
     [HttpGet("sap-het-han")]
     public async Task<IActionResult> SapHetHan([FromQuery] int days = 30)
     {
+        // Gồm cả hợp đồng còn đánh dấu hiệu lực nhưng đã quá ngày kết thúc:
+        // chủ trọ cần xử lý/gia hạn chúng, không để chúng biến mất khỏi nhắc việc.
+        if (days < 0 || days > 3650)
+            return BadRequest(new { success = false, message = "Số ngày phải từ 0 đến 3650." });
         try
         {
             var cutoff = DateOnly.FromDateTime(DateTime.Today.AddDays(days));
-            var list = await _ctx.HopDongs
+            var query = _ctx.HopDongs.AsNoTracking().AsQueryable();
+            if (User.IsInRole("Manager") && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int managerId))
+                query = query.Where(h => h.MaPhongNavigation.MaCoSo.HasValue &&
+                    _ctx.QuanLyCoSos.Any(a => a.MaTaiKhoan == managerId && a.MaCoSo == h.MaPhongNavigation.MaCoSo.Value));
+            var list = await query
                 .Include(h => h.MaPhongNavigation)
                 .Include(h => h.MaKhachDaiDienNavigation)
                 .Where(h => h.TrangThai == HieuLuc && h.NgayKetThuc <= cutoff)
@@ -111,11 +126,16 @@ public class HopDongController : ControllerBase
                 .Select(h => new {
                     maHopDong    = h.MaHopDong,
                     maPhong      = h.MaPhong,
+                    tenPhong     = h.MaPhongNavigation.TenPhong,
+                    maKhachDaiDien = h.MaKhachDaiDien,
+                    hoTenKhach   = h.MaKhachDaiDienNavigation.HoTen,
+                    ngayKy       = h.NgayKy,
                     ngayBatDau   = h.NgayBatDau,
                     ngayKetThuc  = h.NgayKetThuc,
                     giaThueThang = h.GiaThueThang,
                     tienCoc      = h.TienCoc,
-                    trangThai    = h.TrangThai
+                    trangThai    = h.TrangThai,
+                    ghiChu       = h.GhiChu
                 })
                 .ToListAsync();
             return Ok(list);
@@ -130,17 +150,25 @@ public class HopDongController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] HopDong model)
     {
+        if (model.NgayBatDau == default || model.NgayKetThuc == default)
+            return BadRequest(new { success = false, message = "Chọn ngày bắt đầu và ngày kết thúc hợp đồng." });
         if (model.MaPhong <= 0 || model.MaKhachDaiDien <= 0)
             return BadRequest(new { success = false, message = "Thiếu mã phòng hoặc mã khách đại diện." });
         if (model.NgayKetThuc <= model.NgayBatDau)
             return BadRequest(new { success = false, message = "Ngày kết thúc phải sau ngày bắt đầu." });
-        if (model.GiaThueThang is < 0 || model.TienCoc is < 0)
-            return BadRequest(new { success = false, message = "Giá thuê và tiền cọc không được âm." });
+        if (model.GiaThueThang is <= 0 || model.TienCoc is < 0)
+            return BadRequest(new { success = false, message = "Giá thuê phải lớn hơn 0, tiền cọc không được âm." });
+        if (model.NgayKy == default(DateOnly))
+            return BadRequest(new { success = false, message = "Ngày ký hợp đồng không hợp lệ." });
 
-        var phong = await _ctx.Phongs.FindAsync(model.MaPhong);
+        await using var tx = _ctx.Database.CurrentTransaction == null
+            ? await _ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable) : null;
+        var phong = await _ctx.Phongs.FromSqlInterpolated($"SELECT * FROM dbo.Phong WITH (UPDLOCK,HOLDLOCK) WHERE MaPhong={model.MaPhong}").FirstOrDefaultAsync();
         if (phong == null) return NotFound(new { success = false, message = $"Không tìm thấy phòng #{model.MaPhong}." });
-        if (phong.TrangThai == NghiepVu.Phong.BaoTri)
-            return BadRequest(new { success = false, message = $"{phong.TenPhong} đang bảo trì, chưa thể cho thuê." });
+        if (phong.TrangThai != NghiepVu.Phong.Trong && phong.TrangThai != NghiepVu.Phong.DaDatCoc)
+            return BadRequest(new { success = false, message = $"{phong.TenPhong} đang ở trạng thái '{phong.TrangThai}', chưa thể lập hợp đồng mới." });
+        if ((model.GiaThueThang ?? phong.GiaThue) is not > 0)
+            return BadRequest(new { success = false, message = "Chưa có giá thuê hợp lệ cho phòng. Nhập giá thuê lớn hơn 0." });
         // Báo lỗi dễ hiểu trước khi vấp index lọc UX_HopDong_PhongDangHieuLuc.
         if (await _ctx.HopDongs.AnyAsync(h => h.MaPhong == model.MaPhong && h.TrangThai == HieuLuc))
             return BadRequest(new { success = false, message = $"{phong.TenPhong} đã có hợp đồng đang hiệu lực." });
@@ -148,10 +176,12 @@ public class HopDongController : ControllerBase
         var khach = await _ctx.KhachThues.FindAsync(model.MaKhachDaiDien);
         if (khach == null) return NotFound(new { success = false, message = $"Không tìm thấy khách thuê #{model.MaKhachDaiDien}." });
 
-        // Nhận phòng sẽ ghi người đại diện vào cư trú "Đang ở". Nếu người này còn đang ở
-        // hợp đồng khác thì sẽ thành ở 2 nơi cùng lúc — bắt chuyển "Rời đi" bên kia trước.
+        // Người ký có thể thuê hộ; cư trú chỉ gắn với người thực sự ở phòng.
+        int maKhachCuTru = model.MaKhachCuTru ?? model.MaKhachDaiDien;
+        if (await _ctx.KhachThues.FindAsync(maKhachCuTru) == null)
+            return NotFound(new { success = false, message = $"Không tìm thấy người ở thực tế #{maKhachCuTru}." });
         int? hdDangO = await _ctx.CuTrus
-            .Where(c => c.MaKhach == model.MaKhachDaiDien
+            .Where(c => c.MaKhach == maKhachCuTru
                         && (c.TrangThaiCuTru == NghiepVu.CuTru.DangO || c.TrangThaiCuTru == NghiepVu.CuTru.TamVang)
                         && c.MaHopDongNavigation.TrangThai == HieuLuc)
             .Select(c => (int?)c.MaHopDong).FirstOrDefaultAsync();
@@ -159,10 +189,13 @@ public class HopDongController : ControllerBase
             return BadRequest(new
             {
                 success = false,
-                message = $"{khach.HoTen} đang cư trú ở hợp đồng #{hdDangO}. " +
-                          "Cập nhật cư trú bên đó sang \"Rời đi\" (hoặc thanh lý) trước khi lập hợp đồng mới."
+                message = $"Người ở thực tế #{maKhachCuTru} đang cư trú tại hợp đồng #{hdDangO}. " +
+                          "Chọn người khác hoặc ghi nhận rời phòng cũ trước."
             });
-
+        int? toiDa = await _ctx.LoaiPhongs.Where(l => l.MaLoaiPhong == phong.MaLoaiPhong)
+            .Select(l => l.SoNguoiToiDa).FirstOrDefaultAsync();
+        if (toiDa is <= 0)
+            return BadRequest(new { success = false, message = "Loại phòng chưa cho phép người ở; kiểm tra sức chứa." });
         var datPhong = await _ctx.DatPhongs
             .Where(d => d.MaPhong == model.MaPhong && d.TrangThai == NghiepVu.DatPhong.DaDatCoc)
             .OrderByDescending(d => d.NgayDat)
@@ -174,8 +207,22 @@ public class HopDongController : ControllerBase
                 message = $"{phong.TenPhong} đang được giữ chỗ cho khách #{datPhong.MaKhach} (phiếu đặt #{datPhong.MaDatPhong}). " +
                           "Hãy hủy giữ chỗ trước, hoặc lập hợp đồng cho đúng khách đã đặt."
             });
+        if (phong.TrangThai == NghiepVu.Phong.DaDatCoc && datPhong == null)
+            return BadRequest(new { success = false, message = "Phòng được đánh dấu đã đặt cọc nhưng không có phiếu giữ chỗ. Kiểm tra dữ liệu đặt phòng trước." });
+        if (datPhong != null && await _ctx.YeuCauHuyDatPhongs.AnyAsync(r => r.MaDatPhong == datPhong.MaDatPhong && r.TrangThai == "Chờ duyệt"))
+            return BadRequest(new { message = "Phiếu đặt đang có yêu cầu hủy. Xử lý yêu cầu trước khi nhận phòng." });
+        decimal tienCoc = model.TienCoc ?? datPhong?.TienCoc ?? 0;
+        if (tienCoc < (datPhong?.TienCoc ?? 0))
+            return BadRequest(new { success = false, message = $"Tiền cọc hợp đồng không được thấp hơn tiền đã thu khi đặt phòng ({NghiepVu.Tien(datPhong?.TienCoc)})." });
 
-        await using var tx = await _ctx.Database.BeginTransactionAsync();
+        // Chỉ nhận dữ liệu nhập của hợp đồng; các bảng liên quan do server tạo theo nghiệp vụ.
+        model = new HopDong
+        {
+            MaPhong = model.MaPhong, MaKhachDaiDien = model.MaKhachDaiDien,
+            NgayKy = model.NgayKy, NgayBatDau = model.NgayBatDau, NgayKetThuc = model.NgayKetThuc,
+            GiaThueThang = model.GiaThueThang, TienCoc = tienCoc, GhiChu = model.GhiChu
+        };
+
         try
         {
             model.TrangThai      = HieuLuc;
@@ -188,7 +235,7 @@ public class HopDongController : ControllerBase
 
             model.CuTrus.Add(new CuTru
             {
-                MaKhach          = model.MaKhachDaiDien,
+                MaKhach          = maKhachCuTru,
                 NgayVao          = model.NgayBatDau,
                 TrangThaiCuTru   = NghiepVu.CuTru.DangO,
                 TrangThaiKhaiBao = NghiepVu.CuTru.ChuaKhaiBao
@@ -213,13 +260,19 @@ public class HopDongController : ControllerBase
                     : $"Thu bổ sung tiền cọc hợp đồng {NghiepVu.ChuThuongDau(phong.TenPhong)}",
                 conPhaiThu, khach.HoTen);
 
+            // Nếu khách có tài khoản mobile, nhắc cung cấp thông tin cư trú sau khi nhận phòng.
+            if (await NghiepVu.TaiKhoanCuaKhachAsync(_ctx, model.MaKhachDaiDien) is int taiKhoanKhach)
+                NghiepVu.TaoThongBao(_ctx, $"Cập nhật cư trú phòng {phong.TenPhong}",
+                    $"Hợp đồng phòng {phong.TenPhong} đã được lập. Vui lòng kiểm tra thông tin người ở cùng và gửi khai báo cư trú để quản lý xác nhận.",
+                    NghiepVu.ThongBao.LoaiCaNhan, new[] { taiKhoanKhach });
+
             await _ctx.SaveChangesAsync();
-            await tx.CommitAsync();
+            if (tx != null) await tx.CommitAsync();
             return Ok(new { success = true, message = "Tạo hợp đồng thành công", data = new { model.MaHopDong } });
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync();
+            if (tx != null) await tx.RollbackAsync();
             return StatusCode(500, new { success = false, message = ex.InnerException?.Message ?? ex.Message });
         }
     }
@@ -444,9 +497,15 @@ public class HopDongController : ControllerBase
         {
             var item = await _ctx.HopDongs.FindAsync(id);
             if (item == null) return NotFound(new { message = "Không tìm thấy hợp đồng" });
-            item.TrangThai    = model.TrangThai    ?? item.TrangThai;
+            if (model.TrangThai != null && model.TrangThai != item.TrangThai)
+                return BadRequest(new { success = false, message = "Dùng chức năng thanh lý để kết thúc hợp đồng và cập nhật phòng, cư trú, tiền cọc." });
+            if (model.NgayKetThuc != default && model.NgayKetThuc != item.NgayKetThuc)
+                return BadRequest(new { success = false, message = "Dùng chức năng gia hạn để đổi ngày kết thúc và lưu lịch sử hợp đồng." });
+            if (model.GiaThueThang is <= 0)
+                return BadRequest(new { success = false, message = "Giá thuê phải lớn hơn 0." });
+            if (item.TrangThai != HieuLuc && model.GiaThueThang.HasValue && model.GiaThueThang != item.GiaThueThang)
+                return BadRequest(new { success = false, message = "Không sửa giá thuê của hợp đồng đã kết thúc." });
             item.GhiChu       = model.GhiChu       ?? item.GhiChu;
-            item.NgayKetThuc  = model.NgayKetThuc == default ? item.NgayKetThuc : model.NgayKetThuc;
             item.GiaThueThang = model.GiaThueThang ?? item.GiaThueThang;
             await _ctx.SaveChangesAsync();
             return Ok(new { success = true, message = "Cập nhật thành công" });

@@ -21,7 +21,7 @@
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,12"/>
             <TextBox x:Name="TxtSoNguoi" MaxLength="2" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Số người tối đa *"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,12"/>
-            <TextBox x:Name="TxtGia" svc:MoneyInput.IsEnabled="True" md:HintAssist.Hint="Giá mặc định"
+            <TextBox x:Name="TxtGia" svc:MoneyInput.IsEnabled="True" md:HintAssist.Hint="Giá mặc định (từ 100.000 đ) *"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,12"/>
             <TextBox x:Name="TxtMoTa" MaxLength="300" md:HintAssist.Hint="Mô tả"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}"

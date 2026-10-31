@@ -48,16 +48,16 @@ public partial class LoaiPhongDialog : Window
             return;
         }
 
-        decimal giaMacDinh = 0;
-        if (!string.IsNullOrWhiteSpace(TxtGia.Text) && !VnMoney.TryParse(TxtGia.Text, out giaMacDinh))
+        if (!VnMoney.TryParse(TxtGia.Text, out var giaMacDinh) || giaMacDinh < 100_000)
         {
-            TxtError.Text = "Giá mặc định không hợp lệ.";
+            TxtError.Text = "Giá mặc định phải từ 100.000 đ trở lên.";
             return;
         }
 
         BtnSave.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             var body = new
             {
                 tenLoaiPhong = ten,
@@ -72,6 +72,7 @@ public partial class LoaiPhongDialog : Window
             else
                 await ApiClient.PutAsync($"/api/LoaiPhong/{_item.MaLoaiPhong}", body);
 
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)

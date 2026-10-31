@@ -29,12 +29,12 @@ public partial class ThuTienDialog : Window
 
         try
         {
-            IsEnabled = false;
+            using var saveGuard = new DialogSaveGuard(this);
             await ApiClient.PutAsync($"/api/HoaDon/{_maHoaDon}/thu-tien", new { soTienThu = soTien });
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex) { ShowError(ex.Message); }
-        finally { IsEnabled = true; }
     }
 
     private void ShowError(string msg)

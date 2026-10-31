@@ -64,6 +64,37 @@
                     Foreground="{DynamicResource Win11TextSecondaryBrush}">
                 <md:PackIcon Kind="Refresh" Width="18" Height="18"/>
             </Button>
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Doanh thu" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12"/>
+                <ComboBox Width="105" Height="30" ItemsSource="{Binding KhoangOptions}"
+                          SelectedItem="{Binding KhoangThoiGian}"/>
+                <StackPanel Orientation="Horizontal" Margin="6,0,0,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding KhoangThoiGian}" Value="Tùy chọn">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <DatePicker Width="112" SelectedDate="{Binding NgayTu}" ToolTip="Từ tháng"/>
+                    <TextBlock Text="đến" Margin="5,0" VerticalAlignment="Center"/>
+                    <DatePicker Width="112" SelectedDate="{Binding NgayDen}" ToolTip="Đến tháng"/>
+                </StackPanel>
+                <TextBlock Text="HĐ sắp/quá hạn trong" VerticalAlignment="Center" Margin="12,0,6,0" FontSize="12"/>
+                <ComboBox Width="102" Height="30" ItemsSource="{Binding HetHanOptions}"
+                          SelectedItem="{Binding MocHetHan, Mode=TwoWay}"
+                          ToolTip="Chọn mốc hợp đồng sắp hết hạn"/>
+                <TextBox Width="58" Height="30" Margin="8,0,0,0" MaxLength="3"
+                         VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                         Text="{Binding SoNgayTuyChon, UpdateSourceTrigger=PropertyChanged, Delay=400}"
+                         Visibility="{Binding HienSoNgayTuyChon, Converter={StaticResource BoolToVis}}"
+                         ToolTip="Nhập số ngày từ 1 đến 365"/>
+                <TextBlock Text="ngày" VerticalAlignment="Center" Margin="5,0,0,0" FontSize="12"
+                           Visibility="{Binding HienSoNgayTuyChon, Converter={StaticResource BoolToVis}}"/>
+            </StackPanel>
         </DockPanel>
 
         <!-- Error -->
@@ -126,7 +157,7 @@
                                 <md:PackIcon Kind="CalendarAlert" Width="28" Height="28" Foreground="#F57F17"/>
                                 <TextBlock Text="{Binding SapHetHan}" FontSize="30" FontWeight="Bold"
                                            Foreground="#F57F17" Margin="0,8,0,0"/>
-                                <TextBlock Text="Sắp hết hạn (30 ngày)" Foreground="{DynamicResource Win11TextSecondaryBrush}" FontSize="12"/>
+                                <TextBlock Text="Sắp hết hạn" Foreground="{DynamicResource Win11TextSecondaryBrush}" FontSize="12"/>
                             </StackPanel>
                         </md:Card>
                         <md:Card Margin="6" Padding="20" UniformCornerRadius="12">
@@ -159,7 +190,7 @@
                             <DockPanel>
                                 <DockPanel DockPanel.Dock="Top" Margin="0,0,8,6" LastChildFill="False">
                                     <StackPanel DockPanel.Dock="Left">
-                                        <TextBlock Text="Doanh thu 12 kỳ gần nhất" FontWeight="SemiBold" FontSize="13"
+                                        <TextBlock Text="Doanh thu theo khoảng đã chọn" FontWeight="SemiBold" FontSize="13"
                                                    Foreground="{DynamicResource Win11TextPrimaryBrush}"/>
                                         <TextBlock Text="Tổng phát hành mỗi kỳ = đã thu + còn nợ · số liệu chi tiết ở tab Doanh thu theo kỳ"
                                                    FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"
@@ -219,8 +250,8 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!-- Tab 2: HĐ sắp hết hạn -->
-            <TabItem Header="HĐ sắp hết hạn">
+            <!-- Tab 2: HĐ sắp hoặc đã hết hạn -->
+            <TabItem Header="HĐ sắp/quá hạn">
                 <md:Card Margin="0,12,0,0" UniformCornerRadius="12" Padding="0">
                     <DataGrid ItemsSource="{Binding HopDongSapHetHan}"
                               AutoGenerateColumns="False" IsReadOnly="True"

@@ -30,6 +30,8 @@ public partial class HoaDonViewModel : BaseViewModel
             {
                 MaHoaDon = ApiClient.ElStr(el, "maHoaDon"),
                 MaHopDong = ApiClient.ElStr(el, "maHopDong"),
+                TenPhong = LookupData.NestedName(el, "maHopDongNavigation", "maPhongNavigation", "tenPhong"),
+                HoTenKhach = LookupData.NestedName(el, "maHopDongNavigation", "maKhachDaiDienNavigation", "hoTen"),
                 ThangNam = string.IsNullOrEmpty(thang) ? "" : $"{thang}/{nam}",
                 TongTien = tong,
                 TongTienDisplay = VnMoney.FormatD(tong),
@@ -52,6 +54,17 @@ public partial class HoaDonViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private async Task XemChiTietAsync()
+    {
+        if (SelectedItem == null) { ErrorMessage = "Vui lòng chọn một hóa đơn."; return; }
+        await RunSafeAsync(async () =>
+        {
+            var data = await ApiClient.GetRawAsync($"/api/HoaDon/{SelectedItem.MaHoaDon}");
+            new Views.Dialogs.HoaDonChiTietDialog(data).ShowDialog();
+        });
+    }
+
+    [RelayCommand]
     private async Task ThuTienAsync()
     {
         if (SelectedItem == null) { ErrorMessage = "Vui lòng chọn một hóa đơn."; return; }
@@ -65,6 +78,8 @@ public class HoaDonItem
 {
     public string MaHoaDon { get; set; } = "";
     public string MaHopDong { get; set; } = "";
+    public string TenPhong { get; set; } = "";
+    public string HoTenKhach { get; set; } = "";
     public string ThangNam { get; set; } = "";
     public decimal TongTien { get; set; }
     public string TongTienDisplay { get; set; } = "";

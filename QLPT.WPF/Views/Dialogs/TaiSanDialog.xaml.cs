@@ -21,21 +21,23 @@ public partial class TaiSanDialog : Window
         }
 
         decimal giaTri = 0;
-        if (!string.IsNullOrWhiteSpace(TxtGiaTri.Text) && !VnMoney.TryParse(TxtGiaTri.Text, out giaTri))
+        if (!string.IsNullOrWhiteSpace(TxtGiaTri.Text) && (!VnMoney.TryParse(TxtGiaTri.Text, out giaTri) || giaTri < 0))
         {
-            TxtError.Text = "Giá trị tham khảo không hợp lệ.";
+            TxtError.Text = "Giá trị tham khảo phải là số không âm.";
             return;
         }
 
         BtnSave.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             var body = new
             {
                 tenTaiSan = ten,
                 giaTriThamKhao = giaTri
             };
             await ApiClient.PostAsync("/api/TaiSan", body);
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)

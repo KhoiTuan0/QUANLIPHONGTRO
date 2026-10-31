@@ -15,6 +15,15 @@ public partial class GanTaiSanDialog : Window
         _taiSan = taiSan;
         _maPhong = maPhong;
         TxtInfo.Text = $"Tài sản: {taiSan.TenTaiSan}  |  Phòng: {maPhong}";
+        Loaded += async (_, _) =>
+        {
+            try
+            {
+                var room = await ApiClient.GetRawAsync($"/api/Phong/{_maPhong}");
+                TxtInfo.Text = $"Tài sản: {_taiSan.TenTaiSan}  |  {ApiClient.ElStr(room, "tenPhong")}";
+            }
+            catch (Exception ex) { TxtError.Text = ex.Message; }
+        };
     }
 
     private async void BtnSave_Click(object sender, RoutedEventArgs e)
@@ -40,6 +49,7 @@ public partial class GanTaiSanDialog : Window
         BtnSave.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             // API nhận model TaiSanPhong tại /gan-phong; mã phải là số nguyên, không phải chuỗi.
             var body = new
             {
@@ -49,6 +59,7 @@ public partial class GanTaiSanDialog : Window
                 tinhTrang = TxtTinhTrang.Text.Trim()
             };
             await ApiClient.PostAsync("/api/TaiSan/gan-phong", body);
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)

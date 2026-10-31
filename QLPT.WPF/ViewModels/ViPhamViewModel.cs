@@ -29,7 +29,6 @@ public partial class ViPhamViewModel : BaseViewModel
                 list.Add(new ViPhamItem
                 {
                     MaViPham     = ApiClient.ElStr(item, "maViPham"),
-                    MaHopDong    = ApiClient.ElStr(item, "maHopDong"),
                     TenPhong     = ApiClient.ElStr(item, "tenPhong"),
                     TenKhach     = ApiClient.ElStr(item, "tenKhach"),
                     NoiDung      = ApiClient.ElStr(item, "noiDung"),
@@ -38,6 +37,7 @@ public partial class ViPhamViewModel : BaseViewModel
                     MucPhat      = phat > 0 ? VnMoney.FormatD(phat) : "",
                     HinhThucXuLy = ApiClient.ElStr(item, "hinhThucXuLy"),
                     TrangThai    = ApiClient.ElStr(item, "trangThai"),
+                    HoaDon = ApiClient.ElStr(item, "maHoaDon") is { Length: > 0 } invoiceId ? $"HĐ #{invoiceId}" : "Chưa đưa vào HĐ",
                 });
             }
         Items = new ObservableCollection<ViPhamItem>(list);
@@ -49,6 +49,16 @@ public partial class ViPhamViewModel : BaseViewModel
         var dlg = new ViPhamDialog
             { Owner = System.Windows.Application.Current.MainWindow };
         if (dlg.ShowDialog() == true)
+            await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task DuaVaoHoaDonAsync()
+    {
+        if (SelectedItem == null || SelectedItem.TrangThai != "Đã xử lý" || SelectedItem.TienPhatSo <= 0)
+        { ErrorMessage = "Chọn vi phạm đã xử lý và có tiền phạt lớn hơn 0."; return; }
+        if (SelectedItem.HoaDon.StartsWith("HĐ #")) { ErrorMessage = "Khoản phạt đã nằm trong hóa đơn."; return; }
+        if (new GanPhatHoaDonDialog(SelectedItem) { Owner = System.Windows.Application.Current.MainWindow }.ShowDialog() == true)
             await LoadAsync();
     }
 
@@ -67,6 +77,8 @@ public partial class ViPhamViewModel : BaseViewModel
     private async Task XoaAsync()
     {
         if (SelectedItem == null) { ErrorMessage = "Chọn vi phạm cần xóa."; return; }
+        if (SelectedItem.TrangThai == "Đã xử lý")
+        { ErrorMessage = "Vi phạm đã xử lý không thể xóa vì đã có lịch sử hoặc thông báo cho khách."; return; }
         if (!ConfirmDialog.Delete("Bản ghi vi phạm này sẽ bị xóa.",
                 $"#{SelectedItem.MaViPham} — {SelectedItem.NoiDung}", "Xóa vi phạm")) return;
         await RunSafeAsync(async () =>
@@ -78,8 +90,8 @@ public partial class ViPhamViewModel : BaseViewModel
 
 public class ViPhamItem
 {
+    public string HoaDon { get; set; } = "";
     public string MaViPham     { get; set; } = "";
-    public string MaHopDong    { get; set; } = "";
     public string TenPhong     { get; set; } = "";
     public string TenKhach     { get; set; } = "";
     public string NoiDung      { get; set; } = "";

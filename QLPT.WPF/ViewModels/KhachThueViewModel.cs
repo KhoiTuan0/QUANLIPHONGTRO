@@ -7,6 +7,8 @@ namespace QLPT.WPF.ViewModels;
 
 public partial class KhachThueViewModel : BaseViewModel
 {
+    public bool IsAdmin => Session.IsAdmin;
+    public bool CanManageCustomers => Session.IsAdmin || Session.IsManager;
     [ObservableProperty] private ObservableCollection<KhachThueItem> _items = new();
     [ObservableProperty] private KhachThueItem? _selectedItem;
     [ObservableProperty] private string _searchText = "";
@@ -63,6 +65,13 @@ public partial class KhachThueViewModel : BaseViewModel
         if (SelectedItem == null) { ErrorMessage = "Vui lòng chọn một dòng."; return; }
         var dlg = new Views.Dialogs.KhachThueDialog(SelectedItem);
         if (dlg.ShowDialog() == true) await LoadAsync();
+    }
+
+    [RelayCommand]
+    private void EditHistory()
+    {
+        if (SelectedItem == null) { ErrorMessage = "Chọn khách để xem lịch sử chỉnh sửa."; return; }
+        new Views.Dialogs.LichSuKhachThueDialog(SelectedItem.MaKhach, SelectedItem.HoTen).ShowDialog();
     }
 
     [RelayCommand]

@@ -6,13 +6,15 @@ namespace QLPT.WPF.Views.Dialogs;
 public partial class GiaHanDialog : Window
 {
     private readonly string _maHopDong;
+    private readonly DateTime? _ngayKetThucCu;
 
-    public GiaHanDialog(string maHopDong)
+    public GiaHanDialog(string maHopDong, DateTime? ngayKetThucCu = null, string? thongTin = null)
     {
         InitializeComponent();
         _maHopDong = maHopDong;
-        TxtMaHD.Text = $"Mã hợp đồng: {maHopDong}";
-        DpNgayKetThucMoi.SelectedDate = DateTime.Today.AddYears(1);
+        _ngayKetThucCu = ngayKetThucCu;
+        TxtMaHD.Text = $"HĐ #{maHopDong} · {thongTin}";
+        DpNgayKetThucMoi.SelectedDate = (ngayKetThucCu > DateTime.Today ? ngayKetThucCu.Value : DateTime.Today).AddYears(1);
     }
 
     private async void BtnOk_Click(object sender, RoutedEventArgs e)
@@ -24,6 +26,8 @@ public partial class GiaHanDialog : Window
 
         if (DpNgayKetThucMoi.SelectedDate.Value <= DateTime.Today)
         { ShowError("Ngày kết thúc mới phải sau ngày hôm nay."); return; }
+        if (_ngayKetThucCu.HasValue && DpNgayKetThucMoi.SelectedDate <= _ngayKetThucCu)
+        { ShowError($"Ngày kết thúc mới phải sau ngày kết thúc hiện tại ({_ngayKetThucCu:dd/MM/yyyy})."); return; }
 
         decimal? giaThueMoi = null;
         if (!string.IsNullOrWhiteSpace(TxtGiaThueMoi.Text))
@@ -35,15 +39,15 @@ public partial class GiaHanDialog : Window
 
         try
         {
-            IsEnabled = false;
+            using var saveGuard = new DialogSaveGuard(this);
             object body = giaThueMoi.HasValue
                 ? new { ngayKetThucMoi = DpNgayKetThucMoi.SelectedDate.Value.ToString("yyyy-MM-dd"), giaThueMoi = giaThueMoi.Value }
                 : (object)new { ngayKetThucMoi = DpNgayKetThucMoi.SelectedDate.Value.ToString("yyyy-MM-dd") };
             await ApiClient.PostAsync($"/api/HopDong/{_maHopDong}/gia-han", body);
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex) { ShowError(ex.Message); }
-        finally { IsEnabled = true; }
     }
 
     private void ShowError(string msg)

@@ -59,6 +59,92 @@
             <SolidColorBrush x:Key="Win11TextSecondaryBrush"   Color="#888888"/>
             <SolidColorBrush x:Key="Win11BorderBrush"          Color="#E5E5E5"/>
             <SolidColorBrush x:Key="Win11HoverBrush"           Color="#0A000000"/>
+            <SolidColorBrush x:Key="ScrollThumbBrush"            Color="#A3A3A3"/>
+            <SolidColorBrush x:Key="ScrollThumbHoverBrush"       Color="#737373"/>
+
+            <!-- Thin scrollbars throughout the desktop app: no arrow buttons or wide gutter. -->
+            <Style x:Key="SlimScrollThumb" TargetType="Thumb">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Thumb">
+                            <Border x:Name="ThumbFill" Background="{DynamicResource ScrollThumbBrush}"
+                                    CornerRadius="4" Margin="2"/>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ThumbFill" Property="Background" Value="{DynamicResource ScrollThumbHoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsDragging" Value="True">
+                                    <Setter TargetName="ThumbFill" Property="Background" Value="{DynamicResource ScrollThumbHoverBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="SlimScrollPageButton" TargetType="RepeatButton">
+                <Setter Property="Focusable" Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RepeatButton">
+                            <Border Background="Transparent"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <ControlTemplate x:Key="SlimVerticalScrollBar" TargetType="ScrollBar">
+                <Grid Width="{TemplateBinding Width}" Background="Transparent">
+                    <Track x:Name="PART_Track" IsDirectionReversed="True"
+                           Value="{TemplateBinding Value}" Minimum="{TemplateBinding Minimum}"
+                           Maximum="{TemplateBinding Maximum}" ViewportSize="{TemplateBinding ViewportSize}">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}"
+                                          Style="{StaticResource SlimScrollPageButton}"/>
+                        </Track.DecreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb MinHeight="28" Style="{StaticResource SlimScrollThumb}"/>
+                        </Track.Thumb>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}"
+                                          Style="{StaticResource SlimScrollPageButton}"/>
+                        </Track.IncreaseRepeatButton>
+                    </Track>
+                </Grid>
+            </ControlTemplate>
+            <ControlTemplate x:Key="SlimHorizontalScrollBar" TargetType="ScrollBar">
+                <Grid Height="{TemplateBinding Height}" Background="Transparent">
+                    <Track x:Name="PART_Track"
+                           Value="{TemplateBinding Value}" Minimum="{TemplateBinding Minimum}"
+                           Maximum="{TemplateBinding Maximum}" ViewportSize="{TemplateBinding ViewportSize}">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Command="{x:Static ScrollBar.PageLeftCommand}"
+                                          Style="{StaticResource SlimScrollPageButton}"/>
+                        </Track.DecreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb MinWidth="28" Style="{StaticResource SlimScrollThumb}"/>
+                        </Track.Thumb>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Command="{x:Static ScrollBar.PageRightCommand}"
+                                          Style="{StaticResource SlimScrollPageButton}"/>
+                        </Track.IncreaseRepeatButton>
+                    </Track>
+                </Grid>
+            </ControlTemplate>
+            <Style TargetType="ScrollBar">
+                <Setter Property="Width" Value="9"/>
+                <Setter Property="MinWidth" Value="0"/>
+                <Setter Property="MaxWidth" Value="9"/>
+                <Setter Property="Template" Value="{StaticResource SlimVerticalScrollBar}"/>
+                <Style.Triggers>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                        <Setter Property="Width" Value="Auto"/>
+                        <Setter Property="MaxWidth" Value="Infinity"/>
+                        <Setter Property="Height" Value="9"/>
+                        <Setter Property="MinHeight" Value="0"/>
+                        <Setter Property="MaxHeight" Value="9"/>
+                        <Setter Property="Template" Value="{StaticResource SlimHorizontalScrollBar}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
 
             <!-- Global font -->
             <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">

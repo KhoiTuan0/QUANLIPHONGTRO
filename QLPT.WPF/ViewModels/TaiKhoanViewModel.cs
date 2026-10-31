@@ -16,6 +16,8 @@ public partial class TaiKhoanViewModel : BaseViewModel
     private async Task LoadAsync() => await RunSafeAsync(async () =>
     {
         var arr = await ApiClient.GetRawAsync("/api/TaiKhoan");
+        var tenantData = await ApiClient.GetRawAsync("/api/KhachThue");
+        var names = tenantData.EnumerateArray().ToDictionary(x => ApiClient.ElStr(x, "maKhach"), x => ApiClient.ElStr(x, "hoTen"));
         var list = new ObservableCollection<TaiKhoanItem>();
         foreach (var el in arr.EnumerateArray())
             list.Add(new TaiKhoanItem
@@ -23,7 +25,10 @@ public partial class TaiKhoanViewModel : BaseViewModel
                 MaTaiKhoan = ApiClient.ElStr(el, "maTaiKhoan"),
                 TenDangNhap = ApiClient.ElStr(el, "tenDangNhap"),
                 VaiTro = ApiClient.ElStr(el, "vaiTro"),
-                MaKhach = ApiClient.ElStr(el, "maKhach")
+                MaKhach = ApiClient.ElStr(el, "maKhach"),
+                HoTenKhach = names.GetValueOrDefault(ApiClient.ElStr(el, "maKhach"), LookupData.Display(null, ApiClient.ElStr(el, "maKhach"))),
+                MaCoSos = el.TryGetProperty("maCoSos", out var sites) && sites.ValueKind == System.Text.Json.JsonValueKind.Array
+                    ? sites.EnumerateArray().Select(x => x.GetInt32()).ToList() : new List<int>()
             });
         Items = list;
     });
@@ -50,4 +55,7 @@ public class TaiKhoanItem
     public string TenDangNhap { get; set; } = "";
     public string VaiTro { get; set; } = "";
     public string MaKhach { get; set; } = "";
+    public string HoTenKhach { get; set; } = "";
+    public List<int> MaCoSos { get; set; } = new();
+    public string MaCoSoDisplay => MaCoSos.Count == 0 ? "" : string.Join(", ", MaCoSos);
 }

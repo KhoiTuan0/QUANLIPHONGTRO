@@ -21,8 +21,11 @@ public class DichVuController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] DichVu model)
     {
+        if (string.IsNullOrWhiteSpace(model.TenDichVu) || model.TenDichVu.Trim().Length > 100 || model.DonGia is < 0)
+            return BadRequest(new { message = "Tên dịch vụ phải từ 1 đến 100 ký tự; đơn giá không được âm." });
         try
         {
+            model.MaDichVu = 0; model.TenDichVu = model.TenDichVu.Trim(); model.DangKyDichVus = new List<DangKyDichVu>();
             _ctx.DichVus.Add(model);
             await _ctx.SaveChangesAsync();
             return Ok(new { success = true, message = "Thêm dịch vụ thành công", data = model });
@@ -33,11 +36,13 @@ public class DichVuController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] DichVu model)
     {
+        if (string.IsNullOrWhiteSpace(model.TenDichVu) || model.TenDichVu.Trim().Length > 100 || model.DonGia is < 0)
+            return BadRequest(new { message = "Tên dịch vụ phải từ 1 đến 100 ký tự; đơn giá không được âm." });
         try
         {
             var item = await _ctx.DichVus.FindAsync(id);
             if (item == null) return NotFound(new { message = "Không tìm thấy dịch vụ" });
-            item.TenDichVu = model.TenDichVu;
+            item.TenDichVu = model.TenDichVu.Trim();
             item.DonViTinh = model.DonViTinh;
             item.DonGia = model.DonGia;
             item.TrangThai = model.TrangThai;
@@ -54,6 +59,8 @@ public class DichVuController : ControllerBase
         {
             var item = await _ctx.DichVus.FindAsync(id);
             if (item == null) return NotFound(new { message = "Không tìm thấy dịch vụ" });
+            if (await _ctx.DangKyDichVus.AnyAsync(d => d.MaDichVu == id))
+                return BadRequest(new { message = "Dịch vụ đã có lịch sử đăng ký nên không thể xóa." });
             _ctx.DichVus.Remove(item);
             await _ctx.SaveChangesAsync();
             return Ok(new { success = true, message = "Xóa dịch vụ thành công" });

@@ -1,4 +1,4 @@
-﻿using QLPT.WPF.Services;
+using QLPT.WPF.Services;
 using System.Windows;
 
 namespace QLPT.WPF.Views.Dialogs;
@@ -15,9 +15,9 @@ public partial class ViPhamDialog : Window
     {
         TxtError.Text = "";
 
-        if (!KiemTra.Ma(TxtMaHopDong.Text, out int maHopDong))
+        if (!PickMaHopDong.TryGetSelectedId(out int maHopDong))
         {
-            TxtError.Text = "Mã hợp đồng phải là số nguyên dương."; return;
+            TxtError.Text = "Vui lòng chọn hợp đồng từ danh sách đã tải."; return;
         }
         if (string.IsNullOrWhiteSpace(TxtLoaiViPham.Text))
         {
@@ -31,14 +31,15 @@ public partial class ViPhamDialog : Window
         {
             TxtError.Text = "Ngày vi phạm không được sau hôm nay."; return;
         }
-        if (!VnMoney.TryParse(TxtMucPhat.Text, out decimal mucPhat))
+        if (!VnMoney.TryParse(TxtMucPhat.Text, out decimal mucPhat) || mucPhat < 0)
         {
-            TxtError.Text = "Mức phạt phải là số hợp lệ."; return;
+            TxtError.Text = "Mức phạt phải là số không âm."; return;
         }
 
         BtnSave.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             await ApiClient.PostAsync("/api/ViPham", new
             {
                 maHopDong,
@@ -47,6 +48,7 @@ public partial class ViPhamDialog : Window
                 ngayViPham = DpNgayViPham.SelectedDate.Value.ToString("yyyy-MM-dd"),
                 mucPhat,
             });
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)

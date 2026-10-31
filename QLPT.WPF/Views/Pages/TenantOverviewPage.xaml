@@ -138,7 +138,7 @@
                                   MaxHeight="220">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Mã HĐ"      Binding="{Binding MaHopDong}"    Width="0.8*" MinWidth="80"/>
-                                <DataGridTextColumn Header="Phòng"       Binding="{Binding MaPhong}"      Width="0.8*" MinWidth="80"/>
+                                <DataGridTextColumn Header="Phòng"       Binding="{Binding TenPhong}"      Width="0.8*" MinWidth="80"/>
                                 <DataGridTextColumn Header="Bắt đầu"    Binding="{Binding NgayBatDau}"   Width="1.1*" MinWidth="110"/>
                                 <DataGridTextColumn Header="Hết hạn"    Binding="{Binding NgayKetThuc}"  Width="1.1*" MinWidth="110"/>
                                 <DataGridTextColumn Header="Giá thuê/tháng" Binding="{Binding GiaThueThang}" Width="*"/>
@@ -167,6 +167,7 @@
                                   >
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Mã HĐN"     Binding="{Binding MaHoaDon}"  Width="0.8*" MinWidth="80"/>
+                                <DataGridTextColumn Header="Phòng"       Binding="{Binding TenPhong}" Width="*" MinWidth="100"/>
                                 <DataGridTextColumn Header="Tháng/Năm"  Binding="{Binding ThangNam}"  Width="1.1*" MinWidth="110"/>
                                 <DataGridTextColumn Header="Tổng tiền"  Binding="{Binding TongTien}"  Width="*"/>
                                 <DataGridTextColumn Header="Đã thu"     Binding="{Binding DaThu}"     Width="*"/>

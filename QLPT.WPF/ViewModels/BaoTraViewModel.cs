@@ -22,7 +22,9 @@ public partial class BaoTraViewModel : BaseViewModel
             {
                 MaBaoTra = ApiClient.ElStr(el, "maBaoTra"),
                 MaHopDong = ApiClient.ElStr(el, "maHopDong"),
+                TenPhong = LookupData.Display(ApiClient.ElStr(el, "tenPhong"), ApiClient.ElStr(el, "maHopDong")),
                 MaKhach = ApiClient.ElStr(el, "maKhach"),
+                HoTenKhach = LookupData.Display(ApiClient.ElStr(el, "hoTenKhach"), ApiClient.ElStr(el, "maKhach")),
                 NgayBao = ApiClient.ElStr(el, "ngayBao"),
                 NgayDuKienTra = ApiClient.ElStr(el, "ngayDuKienTra"),
                 LyDo = ApiClient.ElStr(el, "lyDo"),
@@ -43,7 +45,9 @@ public class BaoTraItem
 {
     public string MaBaoTra { get; set; } = "";
     public string MaHopDong { get; set; } = "";
+    public string TenPhong { get; set; } = "";
     public string MaKhach { get; set; } = "";
+    public string HoTenKhach { get; set; } = "";
     public string NgayBao { get; set; } = "";
     public string NgayDuKienTra { get; set; } = "";
     public string LyDo { get; set; } = "";

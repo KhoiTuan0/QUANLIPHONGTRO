@@ -54,7 +54,8 @@ public class ThongBaoController : ControllerBase
                     ngayGui     = t.NgayTao,
                     trangThai   = t.TrangThai,
                     soNguoiNhan = t.ThongBaoNguoiNhans.Count(),
-                    soDaDoc     = t.ThongBaoNguoiNhans.Count(n => n.DaDoc)
+                    soDaDoc     = t.ThongBaoNguoiNhans.Count(n => n.DaDoc),
+                    nguoiNhan   = t.ThongBaoNguoiNhans.Select(n => n.MaTaiKhoan).ToList()
                 })
                 .OrderByDescending(t => t.ngayGui)
                 .ToListAsync();
@@ -62,12 +63,18 @@ public class ThongBaoController : ControllerBase
             return Ok(list.Select(t => new
             {
                 t.maThongBao, t.tieuDe, t.noiDung, t.loai, t.ngayGui, t.trangThai,
-                t.soNguoiNhan, t.soDaDoc,
+                t.soNguoiNhan, t.soDaDoc, t.nguoiNhan,
                 soPhanHoi = demPhanHoi.GetValueOrDefault(t.maThongBao)
             }));
         }
         catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
     }
+
+    [HttpGet("nguoi-nhan")]
+    public async Task<IActionResult> GetRecipients() => Ok(await _ctx.TaiKhoans.AsNoTracking()
+        .Where(t => t.TrangThai == NghiepVu.TaiKhoanActive && t.VaiTro == "Customer")
+        .OrderBy(t => t.MaKhachNavigation!.HoTen).ThenBy(t => t.TenDangNhap)
+        .Select(t => new { t.MaTaiKhoan, t.TenDangNhap, t.MaKhach, HoTen = t.MaKhachNavigation == null ? t.TenDangNhap : t.MaKhachNavigation.HoTen }).ToListAsync());
 
     [HttpGet("customer/{maTaiKhoan}")]
     public async Task<IActionResult> GetByAccount(int maTaiKhoan)
@@ -97,6 +104,8 @@ public class ThongBaoController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(model.TieuDe) || string.IsNullOrWhiteSpace(model.NoiDung))
             return BadRequest(new { success = false, message = "Cần tiêu đề và nội dung." });
+        if (model.TieuDe.Trim().Length > 200 || model.NoiDung.Trim().Length > 1000)
+            return BadRequest(new { message = "Tiêu đề tối đa 200 ký tự; nội dung tối đa 1000 ký tự." });
 
         try
         {
@@ -107,6 +116,9 @@ public class ThongBaoController : ControllerBase
                 : (model.DanhSachMaTaiKhoan ?? new());
             if (taiKhoans.Count == 0)
                 return BadRequest(new { success = false, message = "Chưa chọn người nhận." });
+            taiKhoans = taiKhoans.Distinct().ToList();
+            if (taiKhoans.Any(id => id <= 0) || await _ctx.TaiKhoans.CountAsync(t => taiKhoans.Contains(t.MaTaiKhoan) && t.TrangThai == NghiepVu.TaiKhoanActive) != taiKhoans.Count)
+                return BadRequest(new { message = "Có người nhận không tồn tại hoặc đã bị khóa. Hãy tải lại danh sách người nhận." });
 
             var tb = NghiepVu.TaoThongBao(_ctx, model.TieuDe.Trim(), model.NoiDung.Trim(),
                                           model.LoaiThongBao ?? "Hệ thống", taiKhoans);
@@ -198,6 +210,7 @@ public class ThongBaoController : ControllerBase
     [HttpPost("nhac-nho")]
     public async Task<IActionResult> NhacNho([FromQuery] int soNgay = 30)
     {
+        if (soNgay is < 0 or > 3650) return BadRequest(new { message = "Số ngày phải từ 0 đến 3650." });
         try
         {
             var homNay = DateOnly.FromDateTime(DateTime.Now);
@@ -269,7 +282,8 @@ public class ThongBaoController : ControllerBase
         {
             var item = await _ctx.ThongBaos.Include(t => t.ThongBaoNguoiNhans).FirstOrDefaultAsync(t => t.MaThongBao == id);
             if (item == null) return NotFound(new { message = "Không tìm thấy thông báo" });
-            _ctx.ThongBaoNguoiNhans.RemoveRange(item.ThongBaoNguoiNhans);
+            if (item.ThongBaoNguoiNhans.Count > 0)
+                return BadRequest(new { message = "Thông báo đã gửi không thể xóa vì người nhận cần xem lại nội dung và phản hồi." });
             _ctx.ThongBaos.Remove(item);
             await _ctx.SaveChangesAsync();
             return Ok(new { success = true, message = "Xóa thành công" });

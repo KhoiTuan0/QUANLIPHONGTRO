@@ -33,6 +33,14 @@
                         Style="{StaticResource MaterialDesignOutlinedDatePicker}"
                         Margin="0,0,0,16"/>
 
+            <TextBlock Text="Hiện vật được sửa (không bắt buộc)" FontSize="12"
+                       Foreground="{DynamicResource Win11TextSecondaryBrush}" Margin="0,0,0,4"/>
+            <ComboBox x:Name="CbHienVat" Margin="0,0,0,4"
+                      Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+            <TextBlock Text="Chỉ chọn khi hoàn thành sửa chữa cho một hiện vật cụ thể; sửa chữa chung của phòng thì để trống."
+                       TextWrapping="Wrap" FontSize="11" Margin="0,0,0,16"
+                       Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
+
             <TextBlock x:Name="TxtError" Foreground="Crimson"
                        TextWrapping="Wrap" Margin="0,0,0,12"/>
 

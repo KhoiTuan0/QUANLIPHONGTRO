@@ -1,11 +1,13 @@
 using System.Windows;
-using LiveChartsCore.SkiaSharpView; // UseDefaults / HasGlobalSKTypeface
+using LiveChartsCore.SkiaSharpView;
 using QLPT.WPF.Views;
 
 namespace QLPT.WPF;
 
 public partial class App : Application
 {
+    private Window? _activeMainWindow;
+    private bool _returningToLogin;
     private static readonly string LogPath = System.IO.Path.Combine(
         System.IO.Path.GetTempPath(), "qlpt_wpf_crash.txt");
 
@@ -35,21 +37,50 @@ public partial class App : Application
             ex.SetObserved();
         };
 
-        // LiveCharts vẽ bằng SkiaSharp, không dùng font của WPF; chỉ định Segoe UI để
-        // chữ có dấu tiếng Việt (tên phòng, "Đã thu", "Còn nợ"…) hiển thị đúng.
-        LiveChartsCore.LiveCharts.Configure(cfg => cfg
-            .UseDefaults()
-            .HasGlobalSKTypeface(SkiaSharp.SKTypeface.FromFamilyName("Segoe UI")));
+        // Nạp thư viện native từ đầu ra build theo đúng kiến trúc Windows. Trên một số
+        // máy .NET không tự dò được thư mục runtimes khi mở WPF trực tiếp từ .exe.
+        var architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture switch
+        {
+            System.Runtime.InteropServices.Architecture.X86 => "win-x86",
+            System.Runtime.InteropServices.Architecture.Arm64 => "win-arm64",
+            _ => "win-x64"
+        };
+        var skiaPath = System.IO.Path.Combine(AppContext.BaseDirectory,
+            "runtimes", architecture, "native", "libSkiaSharp.dll");
+        if (System.IO.File.Exists(skiaPath))
+            System.Runtime.InteropServices.NativeLibrary.Load(skiaPath);
 
+        LiveChartsCore.LiveCharts.Configure(cfg => cfg.UseDefaults());
+
+        ShowLogin();
+    }
+
+    public void ReturnToLogin()
+    {
+        if (_returningToLogin) return;
+        _returningToLogin = true;
+        try
+        {
+            (_activeMainWindow ?? MainWindow)?.Close();
+            _activeMainWindow = null;
+        }
+        finally { _returningToLogin = false; }
+        ShowLogin();
+    }
+
+    private void ShowLogin()
+    {
         var login = new LoginWindow();
+        MainWindow = login;
         if (login.ShowDialog() == true)
         {
             try
             {
                 System.IO.File.WriteAllText(LogPath, "Step 1: Creating MainWindow\n");
                 var main = new MainWindow();
+                _activeMainWindow = MainWindow = main;
                 System.IO.File.AppendAllText(LogPath, "Step 2: MainWindow created OK\n");
-                main.Closed += (_, __) => Shutdown();
+                main.Closed += (_, __) => { if (!_returningToLogin) Shutdown(); };
                 main.Show();
                 System.IO.File.AppendAllText(LogPath, "Step 3: MainWindow shown OK\n");
             }

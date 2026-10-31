@@ -1,32 +1,21 @@
-﻿<UserControl x:Class="QLPT.WPF.Views.Pages.HopDongPage"
+<UserControl x:Class="QLPT.WPF.Views.Pages.HopDongPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:ctl="clr-namespace:QLPT.WPF.Controls">
     <Grid Margin="20,16,20,20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ctl:CrudTable Grid.Row="0"
-                       ItemsSource="{Binding Items}"
-                       SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                       ReloadCommand="{Binding LoadCommand}"
-                       AddCommand="{Binding TaoHopDongCommand}"
-                       ShowEdit="False"
-                       ShowDelete="False"
-                       IsBusy="{Binding IsBusy}"
-                       ErrorMessage="{Binding ErrorMessage}"
-                       AddLabel="Tạo HĐ"
-                       SearchHint="Tìm theo mã HĐ, phòng, khách đại diện…">
-
-            <!-- Nút nghiệp vụ riêng của trang hợp đồng -->
-            <ctl:CrudTable.ExtraActions>
-                <StackPanel Orientation="Horizontal">
+        <!-- Nút hợp đồng xuống dòng khi cửa sổ hẹp. -->
+        <WrapPanel Margin="0,0,0,4">
                     <Button Command="{Binding GiaHanCommand}"
+                            Visibility="{Binding CanManageContracts, Converter={StaticResource BoolToVis}}"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
-                            Height="36" Padding="12,0" Margin="0,0,8,0">
+                            Height="36" Padding="12,0" Margin="0,0,8,8">
                         <StackPanel Orientation="Horizontal">
                             <md:PackIcon Kind="CalendarClock" Width="16" Height="16"
                                          VerticalAlignment="Center"/>
@@ -35,8 +24,9 @@
                         </StackPanel>
                     </Button>
                     <Button Command="{Binding ThanhLyCommand}"
+                            Visibility="{Binding CanManageContracts, Converter={StaticResource BoolToVis}}"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
-                            Height="36" Padding="12,0" Margin="0,0,8,0">
+                            Height="36" Padding="12,0" Margin="0,0,8,8">
                         <StackPanel Orientation="Horizontal">
                             <md:PackIcon Kind="FileSign" Width="16" Height="16"
                                          VerticalAlignment="Center"/>
@@ -46,7 +36,7 @@
                     </Button>
                     <Button Command="{Binding XemSapHetHanCommand}"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
-                            Height="36" Padding="12,0">
+                            Height="36" Padding="12,0" Margin="0,0,8,8">
                         <StackPanel Orientation="Horizontal">
                             <md:PackIcon Kind="AlertCircle" Width="16" Height="16"
                                          VerticalAlignment="Center"/>
@@ -54,27 +44,68 @@
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                </StackPanel>
-            </ctl:CrudTable.ExtraActions>
+                    <Button Command="{Binding XuatHopDongCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Height="36" Padding="12,0" Margin="0,0,8,8">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="FileDocumentOutline" Width="16" Height="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Xuất HĐ" Margin="6,0,0,0" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding XuatBanGiaoCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Height="36" Padding="12,0" Margin="0,0,0,8">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="ClipboardTextOutline" Width="16" Height="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Xuất bàn giao" Margin="6,0,0,0" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
+
+        <ctl:CrudTable Grid.Row="1"
+                       ItemsSource="{Binding Items}"
+                       SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                       ReloadCommand="{Binding LoadCommand}"
+                       AddCommand="{Binding TaoHopDongCommand}"
+                       ShowAdd="{Binding CanManageContracts}"
+                       ShowEdit="False"
+                       ShowDelete="False"
+                       IsBusy="{Binding IsBusy}"
+                       ErrorMessage="{Binding ErrorMessage}"
+                       AddLabel="Tạo HĐ"
+                       SearchHint="Tìm theo mã HĐ, phòng, khách đại diện…">
 
             <ctl:CrudTable.Columns>
                 <DataGridTextColumn Header="MÃ HĐ"          Binding="{Binding MaHopDong}"           Width="0.8*" MinWidth="80"/>
-                <DataGridTextColumn Header="MÃ PHÒNG"       Binding="{Binding MaPhong}"             Width="0.9*" MinWidth="90"/>
-                <DataGridTextColumn Header="MÃ KH ĐẠI DIỆN" Binding="{Binding MaKhachDaiDien}"      Width="1.3*" MinWidth="130"/>
-                <DataGridTextColumn Header="NGÀY BẮT ĐẦU"   Binding="{Binding NgayBatDau}"          Width="1.2*" MinWidth="120"/>
-                <DataGridTextColumn Header="NGÀY KẾT THÚC"  Binding="{Binding NgayKetThuc}"         Width="1.2*" MinWidth="120"/>
-                <DataGridTextColumn Header="GIÁ THUÊ/THÁNG" Binding="{Binding GiaThueThangDisplay}" Width="1.3*" MinWidth="130"/>
+                <DataGridTextColumn Header="PHÒNG"       Binding="{Binding TenPhong}"             Width="0.9*" MinWidth="90"/>
+                <DataGridTextColumn Header="KHÁCH ĐẠI DIỆN" Binding="{Binding HoTenKhach}"      Width="1.3*" MinWidth="155"/>
+                <DataGridTextColumn Header="NGÀY BẮT ĐẦU"   Binding="{Binding NgayBatDau}"          Width="1.2*" MinWidth="135"/>
+                <DataGridTextColumn Header="NGÀY KẾT THÚC"  Binding="{Binding NgayKetThuc}"         Width="1.2*" MinWidth="140"/>
+                <DataGridTextColumn Header="GIÁ THUÊ/THÁNG" Binding="{Binding GiaThueThangDisplay}" Width="1.3*" MinWidth="155"/>
                 <DataGridTextColumn Header="TIỀN CỌC"       Binding="{Binding TienCocDisplay}"      Width="1.2*" MinWidth="120"/>
-                <DataGridTextColumn Header="TRẠNG THÁI"     Binding="{Binding TrangThai}"           Width="*"/>
+                <DataGridTextColumn Header="TRẠNG THÁI"     Binding="{Binding TrangThai}"           Width="*" MinWidth="120"/>
             </ctl:CrudTable.Columns>
         </ctl:CrudTable>
 
         <!-- Bảng phụ: hợp đồng sắp hết hạn (bật/tắt bằng nút "Sắp hết hạn") -->
-        <StackPanel Grid.Row="1"
+        <StackPanel Grid.Row="2"
                     Visibility="{Binding ShowSapHetHan, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="Hợp đồng sắp hết hạn (30 ngày)"
-                       FontSize="14" FontWeight="SemiBold" Margin="0,16,0,8"
-                       Foreground="{DynamicResource Win11TextPrimaryBrush}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,16,0,8">
+                <TextBlock Text="{Binding TieuDeHetHan}"
+                           FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                           Foreground="{DynamicResource Win11TextPrimaryBrush}"/>
+                <ComboBox Width="102" Height="32" Margin="16,0,0,0"
+                          ItemsSource="{Binding HetHanOptions}"
+                          SelectedItem="{Binding MocHetHan, Mode=TwoWay}"
+                          ToolTip="Chọn mốc hợp đồng cần xử lý"/>
+                <TextBox Width="58" Height="32" Margin="8,0,0,0" MaxLength="3"
+                         VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                         Text="{Binding SoNgayTuyChon, UpdateSourceTrigger=PropertyChanged, Delay=400}"
+                         Visibility="{Binding HienSoNgayTuyChon, Converter={StaticResource BoolToVis}}"
+                         ToolTip="Nhập số ngày từ 1 đến 365"/>
+                <TextBlock Text="ngày" Margin="5,0,0,0" VerticalAlignment="Center"
+                           Visibility="{Binding HienSoNgayTuyChon, Converter={StaticResource BoolToVis}}"/>
+            </StackPanel>
             <Border Background="{DynamicResource Win11SurfaceBrush}"
                     BorderBrush="{DynamicResource Win11BorderBrush}"
                     BorderThickness="1" CornerRadius="6">
@@ -143,7 +174,7 @@
                     </DataGrid.CellStyle>
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="MÃ HĐ"         Binding="{Binding MaHopDong}"   Width="0.8*" MinWidth="80"/>
-                        <DataGridTextColumn Header="MÃ PHÒNG"      Binding="{Binding MaPhong}"     Width="0.9*" MinWidth="90"/>
+                        <DataGridTextColumn Header="PHÒNG"      Binding="{Binding TenPhong}"     Width="0.9*" MinWidth="90"/>
                         <DataGridTextColumn Header="NGÀY KẾT THÚC" Binding="{Binding NgayKetThuc}" Width="1.3*" MinWidth="130"/>
                         <DataGridTextColumn Header="TRẠNG THÁI"    Binding="{Binding TrangThai}"   Width="*"/>
                     </DataGrid.Columns>

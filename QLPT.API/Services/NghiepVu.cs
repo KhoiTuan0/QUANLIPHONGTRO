@@ -110,6 +110,11 @@ public static class NghiepVu
     public static string Tien(decimal? v) =>
         (v ?? 0).ToString("#,##0", CultureInfo.GetCultureInfo("vi-VN")) + "đ";
 
+    public static Task<bool> KhachDangThuePhongAsync(Klcn052QuanLyPhongTroContext ctx, int maPhong, int maKhach) =>
+        ctx.HopDongs.AnyAsync(h => h.MaPhong == maPhong && h.TrangThai == HopDong.HieuLuc
+            && (h.MaKhachDaiDien == maKhach || h.CuTrus.Any(c => c.MaKhach == maKhach
+                && (c.TrangThaiCuTru == CuTru.DangO || c.TrangThaiCuTru == CuTru.TamVang))));
+
     // ───────────────────────── Sổ thu chi ─────────────────────────
 
     /// <summary>Ghi một phiếu vào sổ thu chi (chưa SaveChanges — để nằm chung transaction với nghiệp vụ gốc).</summary>
@@ -124,9 +129,22 @@ public static class NghiepVu
             NoiDung      = noiDung,
             SoTien       = soTien,
             NguoiNopNhan = nguoiNopNhan,
-            GhiChu       = ghiChu,
+            GhiChu       = "[QLPT:auto]" + (string.IsNullOrWhiteSpace(ghiChu) ? "" : " " + ghiChu.Trim()),
             TrangThai    = PhieuHoanTat
         });
+    }
+
+    // Phiếu cũ chưa có dấu nguồn: nhận diện những diễn giải cố định đã được các
+    // nghiệp vụ đặt cọc, hóa đơn và sửa chữa tạo ra trước khi bổ sung dấu nguồn.
+    public static bool LaPhieuTuDong(PhieuThuChi phieu)
+    {
+        if (phieu.GhiChu?.StartsWith("[QLPT:auto]", StringComparison.Ordinal) == true) return true;
+        string noiDung = phieu.NoiDung ?? "";
+        return noiDung.StartsWith("Thu tiền đặt cọc ", StringComparison.OrdinalIgnoreCase)
+            || noiDung.StartsWith("Thu bổ sung tiền cọc hợp đồng ", StringComparison.OrdinalIgnoreCase)
+            || noiDung.StartsWith("Hoàn tiền đặt cọc ", StringComparison.OrdinalIgnoreCase)
+            || noiDung.StartsWith("Thu tiền hóa đơn tháng ", StringComparison.OrdinalIgnoreCase)
+            || noiDung.Contains("(yêu cầu sửa chữa số ", StringComparison.OrdinalIgnoreCase);
     }
 
     // ───────────────────────── Thông báo ─────────────────────────

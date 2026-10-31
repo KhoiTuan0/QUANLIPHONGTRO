@@ -23,6 +23,7 @@ public partial class DangKyDichVuViewModel : BaseViewModel
             ? "/api/DangKyDichVu"
             : $"/api/DangKyDichVu?maHopDong={MaHopDong.Trim()}";
         var el = await ApiClient.GetRawAsync(url);
+        var contracts = (await LookupData.LoadAsync(LookupKind.HopDong)).ToDictionary(x => x.Id, x => x.Label);
         var list = new List<DangKyDichVuItem>();
         if (el.ValueKind == JsonValueKind.Array)
             foreach (var item in el.EnumerateArray())
@@ -30,6 +31,7 @@ public partial class DangKyDichVuViewModel : BaseViewModel
                 {
                     MaDangKy   = ApiClient.ElStr(item, "maDangKy"),
                     MaHopDong  = ApiClient.ElStr(item, "maHopDong"),
+                    HopDongDisplay = contracts.GetValueOrDefault(ApiClient.ElStr(item, "maHopDong"), $"HĐ #{ApiClient.ElStr(item, "maHopDong")}"),
                     MaDichVu   = ApiClient.ElStr(item, "maDichVu"),
                     TenDichVu  = ApiClient.ElStr(item, "tenDichVu"),
                     NgayBatDau = ApiClient.ElStr(item, "ngayBatDau"),
@@ -66,6 +68,7 @@ public class DangKyDichVuItem
 {
     public string MaDangKy    { get; set; } = "";
     public string MaHopDong   { get; set; } = "";
+    public string HopDongDisplay { get; set; } = "";
     public string MaDichVu    { get; set; } = "";
     public string TenDichVu   { get; set; } = "";
     public string NgayBatDau  { get; set; } = "";

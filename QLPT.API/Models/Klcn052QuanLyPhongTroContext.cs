@@ -72,7 +72,7 @@ public partial class Klcn052QuanLyPhongTroContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
-            optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=KLCN052_QuanLyPhongTro;Trusted_Connection=True;TrustServerCertificate=True;");
+            optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS;Database=KLCN052_QuanLyPhongTro;Trusted_Connection=True;TrustServerCertificate=True;");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

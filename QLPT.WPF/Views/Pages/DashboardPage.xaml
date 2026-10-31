@@ -168,7 +168,7 @@
                     <StackPanel Grid.Column="1" Margin="16,14,16,14">
                         <TextBlock Text="{Binding SapHetHan}" FontSize="34" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Win11TextPrimaryBrush}" LineHeight="38"/>
-                        <TextBlock Text="Sắp hết hạn (30 ngày)" FontSize="11" Margin="0,4,0,0"
+                        <TextBlock Text="Sắp hết hạn" FontSize="11" Margin="0,4,0,0"
                                    Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
                     </StackPanel>
                 </Grid>
@@ -244,8 +244,30 @@
                                        Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
                         </StackPanel>
                     </DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,4">
+                        <ComboBox Width="106" Height="28" ItemsSource="{Binding KhoangOptions}"
+                                  SelectedItem="{Binding KhoangThoiGian}" ToolTip="Chọn số tháng thống kê doanh thu"/>
+                        <StackPanel Orientation="Horizontal" Margin="8,0,0,0">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding KhoangThoiGian}" Value="Tùy chọn">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <DatePicker Width="112" SelectedDate="{Binding NgayTu}" ToolTip="Từ tháng"/>
+                            <TextBlock Text="đến" Margin="5,0" VerticalAlignment="Center"/>
+                            <DatePicker Width="112" SelectedDate="{Binding NgayDen}" ToolTip="Đến tháng"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="Crimson" Margin="8,0,0,0"
+                                   VerticalAlignment="Center" FontSize="11"/>
+                    </StackPanel>
                     <Grid>
                         <lvc:CartesianChart Series="{Binding DoanhThuSeries}"
+                                            Background="{DynamicResource Win11SurfaceBrush}"
                                             XAxes="{Binding DoanhThuX}"
                                             YAxes="{Binding DoanhThuY}"
                                             LegendPosition="Hidden"
@@ -266,15 +288,22 @@
                     <TextBlock DockPanel.Dock="Top" Text="Tình trạng phòng" FontWeight="SemiBold" FontSize="13"
                                Margin="0,0,0,6" Foreground="{DynamicResource Win11TextPrimaryBrush}"/>
                     <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="34"/>
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <Grid Grid.Column="0">
+                        <Grid Grid.Row="0" Grid.Column="0">
                             <lvc:PieChart Series="{Binding PhongSeries}"
+                                          Background="{DynamicResource Win11SurfaceBrush}"
                                           LegendPosition="Hidden"
                                           InitialRotation="-90"
-                                          TooltipPosition="Center"
+                                          TooltipPosition="Hidden"
+                                          HoveredPointsChanged="PhongChart_HoveredPointsChanged"
+                                          MouseLeave="PhongChart_MouseLeave"
                                           TooltipBackgroundPaint="{Binding TooltipNen}"
                                           TooltipTextPaint="{Binding TooltipChu}"
                                           TooltipTextSize="12"/>
@@ -286,7 +315,7 @@
                                            Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
                             </StackPanel>
                         </Grid>
-                        <ItemsControl Grid.Column="1" ItemsSource="{Binding PhongChuThich}"
+                        <ItemsControl Grid.Row="0" Grid.Column="1" ItemsSource="{Binding PhongChuThich}"
                                       VerticalAlignment="Center" Margin="8,0,0,0">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -311,6 +340,12 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <Border Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0" Padding="4,4"
+                                BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="0,1,0,0">
+                            <TextBlock Text="{Binding PhongDangRe}" HorizontalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" FontSize="11"
+                                       Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
+                        </Border>
                     </Grid>
                 </DockPanel>
             </Border>
@@ -323,21 +358,38 @@
                 <Border DockPanel.Dock="Top" Padding="20,12"
                         BorderBrush="{DynamicResource Win11BorderBrush}"
                         BorderThickness="0,0,0,1">
-                    <DockPanel>
-                        <StackPanel DockPanel.Dock="Left">
-                            <TextBlock Text="Hợp đồng sắp hết hạn"
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                            <TextBlock Text="Hợp đồng sắp hoặc đã hết hạn"
                                        FontWeight="SemiBold" FontSize="13"
                                        Foreground="{DynamicResource Win11TextPrimaryBrush}"/>
-                            <TextBlock Text="Trong vòng 30 ngày tới"
+                            <TextBlock Text="{Binding MoTaHetHan}"
                                        FontSize="11" Margin="0,2,0,0"
                                        Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
                         </StackPanel>
-                        <Border DockPanel.Dock="Right" Background="#FEF3C7"
-                                Padding="8,3" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding SapHetHan, StringFormat='{}{0} hợp đồng'}"
-                                       FontSize="11" FontWeight="Medium" Foreground="#92400E"/>
-                        </Border>
-                    </DockPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Xem trong" VerticalAlignment="Center" Margin="0,0,8,0"
+                                       FontSize="11" Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
+                            <ComboBox Width="102" Height="32" ItemsSource="{Binding HetHanOptions}"
+                                      SelectedItem="{Binding MocHetHan, Mode=TwoWay}"
+                                      HorizontalContentAlignment="Center" ToolTip="Chọn mốc hợp đồng sắp hết hạn"/>
+                            <TextBox Width="58" Height="32" Margin="8,0,0,0" MaxLength="3"
+                                     VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                     Text="{Binding SoNgayTuyChon, UpdateSourceTrigger=PropertyChanged, Delay=400}"
+                                     Visibility="{Binding HienSoNgayTuyChon, Converter={StaticResource BoolToVis}}"
+                                     ToolTip="Nhập số ngày từ 1 đến 365"/>
+                            <TextBlock Text="ngày" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="11"
+                                       Visibility="{Binding HienSoNgayTuyChon, Converter={StaticResource BoolToVis}}"/>
+                            <Border Background="#FEF3C7" Padding="8,3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding SapHetHan, StringFormat='{}{0} hợp đồng'}"
+                                           FontSize="11" FontWeight="Medium" Foreground="#92400E"/>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
                 </Border>
                 <DataGrid ItemsSource="{Binding HopDongSapHetHan}" MinHeight="140"
                           AutoGenerateColumns="False" IsReadOnly="True"

@@ -21,6 +21,9 @@ public partial class KhachThue
 
     public string? DiaChi { get; set; }
 
+    // Cơ sở đang tiếp nhận hồ sơ; lịch sử ở các cơ sở khác vẫn nằm trong hợp đồng/đặt phòng.
+    public int? MaCoSoTiepNhan { get; set; }
+
     public virtual ICollection<BaoTraPhong> BaoTraPhongs { get; set; } = new List<BaoTraPhong>();
 
     public virtual ICollection<CuTru> CuTrus { get; set; } = new List<CuTru>();

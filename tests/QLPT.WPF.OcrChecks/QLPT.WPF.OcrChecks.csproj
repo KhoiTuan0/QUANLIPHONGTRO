@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../QLPT.WPF/QLPT.WPF.csproj" />
+    <Content Include="../../ocr-data/vie.traineddata" Link="tessdata/vie.traineddata" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../ocr-data/eng.traineddata" Link="tessdata/eng.traineddata" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

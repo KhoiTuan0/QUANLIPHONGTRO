@@ -16,9 +16,9 @@
 
             <TextBox x:Name="TxtTen" MaxLength="100" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Tên cơ sở *"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,12"/>
-            <TextBox x:Name="TxtDiaChi" MaxLength="300" md:HintAssist.Hint="Địa chỉ"
+            <TextBox x:Name="TxtDiaChi" MaxLength="300" md:HintAssist.Hint="Địa chỉ *"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,12"/>
-            <TextBox x:Name="TxtSdt" MaxLength="10" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Số điện thoại"
+            <TextBox x:Name="TxtSdt" MaxLength="10" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Số điện thoại *"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,12"/>
             <TextBox x:Name="TxtMoTa" MaxLength="300" md:HintAssist.Hint="Mô tả"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}"

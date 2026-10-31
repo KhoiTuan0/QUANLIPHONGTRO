@@ -29,6 +29,8 @@ public static class ThemeService
         Set("Win11AccentBrush",        dark ? "#4BA3F5" : "#0066CC");
         Set("Win11AccentLightBrush",   dark ? "#152035" : "#EEF4FF");
         Set("Win11HoverBrush",         dark ? "#18FFFFFF" : "#0A000000");
+        Set("ScrollThumbBrush",        dark ? "#707070" : "#A3A3A3");
+        Set("ScrollThumbHoverBrush",   dark ? "#A6A6A6" : "#737373");
 
         // Biểu đồ: cùng 4 sắc độ nhưng bước riêng cho nền tối (không tự đảo màu).
         Set("ChartSeries1Brush", dark ? "#3987E5" : "#2A78D6");

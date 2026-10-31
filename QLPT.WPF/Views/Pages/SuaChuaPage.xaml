@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="QLPT.WPF.Views.Pages.SuaChuaPage"
+<UserControl x:Class="QLPT.WPF.Views.Pages.SuaChuaPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctl="clr-namespace:QLPT.WPF.Controls"
@@ -23,6 +23,9 @@
         <ctl:CrudTable.Columns>
             <DataGridTextColumn Header="MÃ SC"           Binding="{Binding MaSuaChua}"     Width="0.8*" MinWidth="80"/>
             <DataGridTextColumn Header="MÃ HĐ"           Binding="{Binding MaHopDong}"     Width="0.8*" MinWidth="80"/>
+            <DataGridTextColumn Header="PHÒNG" Binding="{Binding TenPhong}" Width="1.1*" MinWidth="110"/>
+            <DataGridTextColumn Header="HIỆN VẬT" Binding="{Binding MaDinhDanhHienVat}" Width="0.9*" MinWidth="100"/>
+            <DataGridTextColumn Header="KHÁCH THUÊ" Binding="{Binding HoTenKhach}" Width="1.5*" MinWidth="150"/>
             <DataGridTextColumn Header="MÔ TẢ"           Binding="{Binding MoTa}"          Width="*"/>
             <DataGridTextColumn Header="NGÀY YÊU CẦU"    Binding="{Binding NgayYeuCau}"    Width="1.3*" MinWidth="130"/>
             <DataGridTextColumn Header="NGÀY HOÀN THÀNH" Binding="{Binding NgayHoanThanh}" Width="1.3*" MinWidth="130"/>

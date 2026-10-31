@@ -55,7 +55,7 @@
                     </StackPanel>
                 </Button>
                 <Button Command="{Binding PhanHoiCommand}"
-                        Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVis}}"
+                        Visibility="{Binding IsCustomer, Converter={StaticResource BoolToVis}}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
                         Height="36" Padding="12,0">
                     <StackPanel Orientation="Horizontal">

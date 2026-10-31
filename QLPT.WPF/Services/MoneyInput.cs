@@ -80,9 +80,8 @@ public static class MoneyInput
         if (e.DataObject.GetData(DataFormats.UnicodeText) is not string s) return;
 
         // Dán "1.500.000 đ" hay "1500000.00" đều hiểu theo số tiền, không ghép bừa chữ số.
-        string so = VnMoney.TryParse(s, out var v)
-            ? Math.Round(Math.Abs(v), MidpointRounding.AwayFromZero).ToString(CultureInfo.InvariantCulture)
-            : LaySo(s);
+        if (!TryNormalize(s, out string so)) return;
+        if (DemSo(tb.Text) - DemSo(tb.SelectedText) + so.Length > SoChuSoToiDa) return;
 
         int dau = tb.SelectionStart;
         string moi = tb.Text.Remove(dau, tb.SelectionLength).Insert(dau, so);
@@ -96,17 +95,26 @@ public static class MoneyInput
 
         if (tb.IsKeyboardFocused)
         {
+            // Không biến giá trị âm hoặc chuỗi lỗi được gán bằng code thành tiền dương.
+            if (tb.Text.Any(c => !char.IsAsciiDigit(c) && c != '.')) return;
             // Người dùng đang gõ: chỉ còn chữ số và dấu chấm do mình chèn → lấy chữ số, nhóm lại.
             Ghi(tb, tb.Text, DemSo(tb.Text[..Math.Min(tb.CaretIndex, tb.Text.Length)]));
         }
         else
         {
             // Code gán sẵn (VD giá trị cũ "1500000.00", "1.500.000 đ"): đọc theo số tiền rồi làm tròn.
-            string t = VnMoney.TryParse(tb.Text, out var v)
-                ? Math.Round(Math.Abs(v), MidpointRounding.AwayFromZero).ToString(CultureInfo.InvariantCulture)
-                : tb.Text;
+            if (!TryNormalize(tb.Text, out string t)) return;
             Ghi(tb, t, int.MaxValue);
         }
+    }
+
+    private static bool TryNormalize(string text, out string digits)
+    {
+        digits = "";
+        if (text.Any(c => !char.IsAsciiDigit(c) && !char.IsWhiteSpace(c) && c is not ('.' or ',' or 'đ' or '₫')) ||
+            !VnMoney.TryParse(text, out var value) || value < 0) return false;
+        digits = Math.Round(value, MidpointRounding.AwayFromZero).ToString(CultureInfo.InvariantCulture);
+        return digits.Length <= SoChuSoToiDa;
     }
 
     /// <summary>Gán text đã nhóm nghìn và đặt con trỏ ngay sau chữ số thứ <paramref name="soTruocConTro"/>.</summary>

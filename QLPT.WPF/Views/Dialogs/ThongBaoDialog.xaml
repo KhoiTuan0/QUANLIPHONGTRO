@@ -33,10 +33,27 @@
                 <ComboBoxItem Content="Cá nhân"/>
             </ComboBox>
 
-            <TextBox x:Name="TxtMaTaiKhoanNhan" MaxLength="200" md:TextFieldAssist.CharacterCounterVisibility="Collapsed"
-                     md:HintAssist.Hint="Mã tài khoản nhận (VD: 2, 5 — trống = gửi tất cả khách)"
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                     Margin="0,0,0,16"/>
+            <CheckBox x:Name="CbAll" Content="Gửi cho tất cả tài khoản khách thuê đang hoạt động"
+                      Checked="All_Changed" Unchecked="All_Changed" Margin="0,0,0,8"/>
+            <StackPanel x:Name="RecipientPanel">
+                <TextBox x:Name="TxtSearchRecipient" MaxLength="100" TextChanged="RecipientSearch_Changed"
+                         md:HintAssist.Hint="Tìm người nhận theo tên, SĐT, CCCD hoặc tài khoản"
+                         md:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,6"/>
+                <ListBox x:Name="ListRecipients" Height="140" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      Content="{Binding Label}" ToolTip="{Binding SearchText}" Margin="0,4"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+            <DockPanel Margin="0,4,0,12">
+                <TextBlock x:Name="TxtRecipientStatus" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center"
+                           Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
+            </DockPanel>
 
             <TextBlock x:Name="TxtError" Foreground="Crimson"
                        TextWrapping="Wrap" Margin="0,0,0,12"/>

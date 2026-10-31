@@ -13,6 +13,13 @@ public partial class DatPhongViewModel : BaseViewModel
     public DatPhongViewModel() => _ = LoadAsync();
 
     [RelayCommand]
+    private async Task YeuCauHuyAsync()
+    {
+        new Views.Dialogs.YeuCauHuyDatPhongDialog(SelectedItem) { Owner = System.Windows.Application.Current.MainWindow }.ShowDialog();
+        await LoadAsync();
+    }
+
+    [RelayCommand]
     private async Task LoadAsync() => await RunSafeAsync(async () =>
     {
         var arr = await ApiClient.GetRawAsync("/api/DatPhong");
@@ -24,7 +31,9 @@ public partial class DatPhongViewModel : BaseViewModel
             {
                 MaDatPhong = ApiClient.ElStr(el, "maDatPhong"),
                 MaPhong = ApiClient.ElStr(el, "maPhong"),
+                TenPhong = LookupData.Display(ApiClient.ElStr(el, "tenPhong"), ApiClient.ElStr(el, "maPhong")),
                 MaKhach = ApiClient.ElStr(el, "maKhach"),
+                TenKhach = LookupData.Display(ApiClient.ElStr(el, "tenKhach"), ApiClient.ElStr(el, "maKhach")),
                 NgayDat = ApiClient.ElStr(el, "ngayDat"),
                 NgayDuKienNhan = ApiClient.ElStr(el, "ngayDuKienNhan"),
                 TienCoc = coc,
@@ -43,15 +52,24 @@ public partial class DatPhongViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private async Task NhanPhongAsync()
+    {
+        if (SelectedItem == null) { ErrorMessage = "Vui lòng chọn lượt đặt phòng cần nhận."; return; }
+        if (SelectedItem.TrangThai != "Đã đặt cọc") { ErrorMessage = "Chỉ nhận phòng cho lượt đặt đang giữ chỗ."; return; }
+        var dlg = new Views.Dialogs.HopDongDialog(SelectedItem.MaPhong, SelectedItem.MaKhach, SelectedItem.TienCoc);
+        if (dlg.ShowDialog() == true) await LoadAsync();
+    }
+
+    [RelayCommand]
     private async Task HuyGiuChoAsync()
     {
         if (SelectedItem == null) { ErrorMessage = "Vui lòng chọn một dòng."; return; }
-        if (SelectedItem.TrangThai == "Đã hủy") { ErrorMessage = "Đặt phòng này đã bị hủy."; return; }
+        if (SelectedItem.TrangThai != "Đã đặt cọc") { ErrorMessage = "Chỉ hủy được lượt đặt đang giữ chỗ."; return; }
         // Hủy giữ chỗ không phải xóa dữ liệu nên dùng tông cảnh báo thay vì tông xóa.
         if (!Views.Dialogs.ConfirmDialog.Show(
                 "Xác nhận hủy giữ chỗ",
                 "Lượt đặt phòng sẽ chuyển sang trạng thái \"Đã hủy\".",
-                $"#{SelectedItem.MaDatPhong} — Phòng {SelectedItem.MaPhong} · Khách {SelectedItem.MaKhach}",
+                $"#{SelectedItem.MaDatPhong} — {SelectedItem.TenPhong} · {SelectedItem.TenKhach}",
                 "Hủy giữ chỗ",
                 MaterialDesignThemes.Wpf.PackIconKind.CalendarRemoveOutline,
                 "#F59E0B", warn: true)) return;
@@ -67,7 +85,9 @@ public class DatPhongItem
 {
     public string MaDatPhong { get; set; } = "";
     public string MaPhong { get; set; } = "";
+    public string TenPhong { get; set; } = "";
     public string MaKhach { get; set; } = "";
+    public string TenKhach { get; set; } = "";
     public string NgayDat { get; set; } = "";
     public string NgayDuKienNhan { get; set; } = "";
     public decimal TienCoc { get; set; }

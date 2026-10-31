@@ -8,7 +8,8 @@
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
         FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
-        FontSize="14">
+        FontSize="14"
+        TextElement.Foreground="{DynamicResource Win11TextPrimaryBrush}">
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -46,21 +47,25 @@
                                FontSize="13" Margin="0,0,0,32"/>
 
                     <!-- Hidden API URL — kept for code-behind compatibility -->
-                    <TextBox x:Name="TxtApiUrl" Visibility="Collapsed" Text="http://localhost:5000"/>
+                    <TextBox x:Name="TxtApiUrl" Visibility="Collapsed" Text="http://localhost:5180"/>
 
                     <!-- Username -->
                     <TextBox x:Name="TxtUsername"
                              md:HintAssist.Hint="Tên đăng nhập"
+                             md:HintAssist.Foreground="{DynamicResource Win11TextSecondaryBrush}"
                              md:TextFieldAssist.HasLeadingIcon="True"
                              md:TextFieldAssist.LeadingIcon="Account"
+                             Foreground="{DynamicResource Win11TextPrimaryBrush}"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Margin="0,0,0,16"/>
 
                     <!-- Password -->
                     <PasswordBox x:Name="PbPassword"
                                  md:HintAssist.Hint="Mật khẩu"
+                                 md:HintAssist.Foreground="{DynamicResource Win11TextSecondaryBrush}"
                                  md:TextFieldAssist.HasLeadingIcon="True"
                                  md:TextFieldAssist.LeadingIcon="Lock"
+                                 Foreground="{DynamicResource Win11TextPrimaryBrush}"
                                  Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
                                  Margin="0,0,0,8"/>
 
@@ -76,13 +81,6 @@
                             Style="{StaticResource MaterialDesignRaisedButton}"
                             Height="48" FontSize="15" FontWeight="Bold"
                             Click="BtnLogin_Click" Margin="0,0,0,12"/>
-
-                    <!-- Register -->
-                    <Button x:Name="BtnRegister"
-                            Content="Chưa có tài khoản? Đăng ký ngay"
-                            Style="{StaticResource MaterialDesignFlatButton}"
-                            Foreground="{DynamicResource Win11TextSecondaryBrush}"
-                            Click="BtnRegister_Click"/>
 
                     <!-- Loading indicator -->
                     <ProgressBar x:Name="LoadingBar"

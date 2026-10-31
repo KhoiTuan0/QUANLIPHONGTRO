@@ -34,6 +34,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _vm;
         ThemeService.ThemeChanged += OnThemeChanged;
+        Closed += (_, _) => ThemeService.ThemeChanged -= OnThemeChanged;
 
         // Thu gọn / mở menu phải dựng lại để nhãn text theo đúng trạng thái,
         // nếu không nhãn cũ sẽ bị cắt ngang thay vì ẩn hẳn.
@@ -87,6 +88,24 @@ public partial class MainWindow : Window
         _groupHeaders.Clear();
         NavPanel.Children.Clear();
 
+        if (Session.IsBackupOperator)
+        {
+            AddNavItem("Sao lưu", PackIconKind.DatabaseExport, "Sao lưu", "THIẾT LẬP");
+            return;
+        }
+        if (Session.IsManager)
+        {
+            AddNavItem("Phòng trọ", PackIconKind.Door, "Phòng trọ", "VẬN HÀNH");
+            AddNavItem("Khách thuê", PackIconKind.AccountGroup, "Khách thuê", "VẬN HÀNH");
+            AddNavItem("Đặt phòng", PackIconKind.CalendarCheck, "Đặt phòng", "VẬN HÀNH");
+            AddNavItem("Hợp đồng", PackIconKind.FileDocument, "Hợp đồng", "VẬN HÀNH");
+            AddNavItem("Cư trú", PackIconKind.HomeAccount, "Cư trú", "VẬN HÀNH");
+            AddNavItem("Chỉ số điện nước", PackIconKind.Gauge, "Chỉ số điện nước", "VẬN HÀNH");
+            AddNavItem("Tài sản", PackIconKind.Sofa, "Tài sản", "VẬN HÀNH");
+            AddNavItem("Sửa chữa", PackIconKind.Hammer, "Sửa chữa", "VẬN HÀNH");
+            AddNavItem("Thông báo", PackIconKind.Bell, "Thông báo", "VẬN HÀNH");
+            return;
+        }
         if (!Session.IsAdmin)
         {
             AddNavItem("Thông tin của tôi", PackIconKind.AccountCircle, "Thông tin của tôi", "");

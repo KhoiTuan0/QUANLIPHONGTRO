@@ -14,11 +14,16 @@
                    AddCommand="{Binding AddCommand}"
                    EditCommand="{Binding EditCommand}"
                    DeleteCommand="{Binding DeleteCommand}"
+                   ShowAdd="{Binding CanManageCustomers}" ShowEdit="{Binding CanManageCustomers}" ShowDelete="False"
                    IsBusy="{Binding IsBusy}"
                    ErrorMessage="{Binding ErrorMessage}"
                    AddLabel="Thêm khách thuê"
                    DeleteLabel="Xóa mềm khách thuê này"
                    SearchHint="Tìm theo tên, CCCD, SĐT, email…">
+        <ctl:CrudTable.ExtraActions>
+            <Button Content="Lịch sử sửa thông tin" Command="{Binding EditHistoryCommand}"
+                    Style="{StaticResource MaterialDesignOutlinedButton}" Height="36" Padding="12,0"/>
+        </ctl:CrudTable.ExtraActions>
         <ctl:CrudTable.Columns>
             <DataGridTextColumn Header="MÃ"        Binding="{Binding MaKhach}"     Width="0.6*" MinWidth="60"/>
             <DataGridTextColumn Header="HỌ TÊN"    Binding="{Binding HoTen}"       Width="*"/>

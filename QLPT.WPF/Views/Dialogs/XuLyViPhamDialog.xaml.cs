@@ -37,12 +37,14 @@ public partial class XuLyViPhamDialog : Window
         BtnSave.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             await ApiClient.PutAsync($"/api/ViPham/{_item.MaViPham}/xu-ly", new
             {
                 hinhThucXuLy = hinhThuc,
                 tienPhat,
                 guiThongBao = ChkThongBao.IsChecked == true
             });
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)

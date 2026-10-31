@@ -8,6 +8,8 @@ namespace QLPT.WPF.ViewModels;
 
 public partial class MainViewModel : BaseViewModel
 {
+    private readonly Action _returnToLogin;
+    public MainViewModel(Action? returnToLogin = null) => _returnToLogin = returnToLogin ?? (() => ((App)System.Windows.Application.Current).ReturnToLogin());
     [ObservableProperty] private object? _currentPage;
     [ObservableProperty] private string _currentPageTitle = "Dashboard";
     [ObservableProperty] private string _currentPageGroup = "";
@@ -17,7 +19,7 @@ public partial class MainViewModel : BaseViewModel
 
     public string UserInfo    => $"{Session.TenDangNhap} ({Session.VaiTro})";
     public string UserName    => Session.TenDangNhap;
-    public string UserRole    => Session.IsAdmin ? "Quản trị viên" : "Khách thuê";
+    public string UserRole    => Session.IsAdmin ? "Chủ trọ" : Session.IsManager ? "Quản lý cơ sở" : Session.IsBackupOperator ? "Phụ trách sao lưu" : "Khách thuê";
     public string UserInitial => Session.TenDangNhap.Length > 0
         ? Session.TenDangNhap[0].ToString().ToUpper() : "?";
     public bool IsAdmin => Session.IsAdmin;
@@ -36,6 +38,15 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private void NavigateTo(string page)
     {
+        if (!Session.IsLoggedIn)
+        { ErrorMessage = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."; return; }
+        if (Session.IsManager && page is not ("Phòng trọ" or "Khách thuê" or "Đặt phòng" or "Hợp đồng" or "Cư trú" or "Chỉ số điện nước" or "Tài sản" or "Sửa chữa" or "Thông báo"))
+        { ErrorMessage = "Quản lý chỉ xem và xử lý nghiệp vụ vận hành tại cơ sở được phân công."; return; }
+        if (Session.IsBackupOperator && page != "Sao lưu")
+        { ErrorMessage = "Người phụ trách sao lưu chỉ được mở mục Sao lưu."; return; }
+        if (!Session.IsAdmin && !Session.IsManager && !Session.IsBackupOperator && page is not ("Thông tin của tôi" or "Thông báo"))
+        { ErrorMessage = "Tài khoản khách thuê chỉ xem được thông tin và thông báo của mình."; return; }
+        ErrorMessage = "";
         CurrentPageTitle = page;
         CurrentPage = page switch
         {
@@ -73,9 +84,7 @@ public partial class MainViewModel : BaseViewModel
     private async Task LogoutAsync()
     {
         try { await ApiClient.PostAsync("/api/Auth/logout", new { }); } catch { }
-        Session.Logout();
-        System.Windows.Application.Current.Shutdown();
-        var exe = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
-        if (exe != null) System.Diagnostics.Process.Start(exe);
+        ApiClient.ResetAuthentication();
+        _returnToLogin();
     }
 }

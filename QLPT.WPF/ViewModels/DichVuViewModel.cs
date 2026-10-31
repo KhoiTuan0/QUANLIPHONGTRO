@@ -41,6 +41,14 @@ public partial class DichVuViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private async Task EditAsync()
+    {
+        if (SelectedItem == null) { ErrorMessage = "Vui lòng chọn một dòng."; return; }
+        var dlg = new Views.Dialogs.DichVuDialog(SelectedItem);
+        if (dlg.ShowDialog() == true) await LoadAsync();
+    }
+
+    [RelayCommand]
     private async Task DeleteAsync()
     {
         if (SelectedItem == null) { ErrorMessage = "Vui lòng chọn một dòng."; return; }

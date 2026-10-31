@@ -11,13 +11,22 @@ public partial class BanGiaoViewModel : BaseViewModel
     [ObservableProperty] private ObservableCollection<TaiSanPhongItem> _items = new();
     [ObservableProperty] private TaiSanPhongItem? _selectedItem;
 
+    partial void OnMaPhongChanged(string value)
+    {
+        Items = new();
+        SelectedItem = null;
+        ErrorMessage = "";
+    }
+
     [RelayCommand]
     private async Task TaiAsync()
     {
-        if (string.IsNullOrWhiteSpace(MaPhong)) { ErrorMessage = "Nhập mã phòng."; return; }
+        if (!KiemTra.Ma(MaPhong, out _)) { ErrorMessage = "Vui lòng chọn phòng từ danh sách."; return; }
+        var roomId = MaPhong;
         await RunSafeAsync(async () =>
         {
-            var arr = await ApiClient.GetRawAsync($"/api/TaiSan/phong/{MaPhong.Trim()}");
+            var arr = await ApiClient.GetRawAsync($"/api/TaiSan/phong/{roomId}");
+            if (roomId != MaPhong) return;
             var list = new ObservableCollection<TaiSanPhongItem>();
             foreach (var el in arr.EnumerateArray())
             {

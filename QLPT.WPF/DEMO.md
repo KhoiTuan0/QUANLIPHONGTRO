@@ -1,102 +1,39 @@
-# Kịch bản demo — QLPT (WPF)
+﻿# Kịch bản demo WPF + API
 
-Kịch bản đi theo 3 luồng nghiệp vụ, dùng dữ liệu đang có trong DB `KLCN052_QuanLyPhongTro`
-(số liệu chụp ngày 10/10/2026). Thời lượng khoảng 15–20 phút.
+Hồ sơ cài đặt, vận hành và hướng dẫn biểu mẫu: [HO_SO_BAN_GIAO](../HO_SO_BAN_GIAO/README.md). Mẫu hợp đồng đã bổ sung các phần thỏa thuận cần điền; kiểm tra bản in và kiểm thử phiên bản cuối để thực hiện sau, không xem việc có tài liệu là đã nghiệm thu.
 
-> **Trước khi demo**
-> - Chạy API: `http://localhost:5000` (Swagger: `/swagger`), rồi mở `wpf_sc\QLPT.WPF.exe`.
-> - Mọi thao tác trong demo **ghi thật vào DB**, và chức năng Sao lưu hiện chưa khôi phục được.
->   Hãy tập trước, và để bước **không hoàn tác được** (thanh lý hợp đồng) ở cuối.
-> - Tài khoản quản trị: `admin` / `Admin@123`.
+Kịch bản này dùng dữ liệu đang có trên máy trình bày; không dựa vào mã phòng, số hợp đồng, số dư hoặc mật khẩu cố định trong tài liệu cũ. Những bước ghi dữ liệu nên tập trước trên bản sao CSDL, rồi chọn sẵn phòng, khách, kỳ chỉ số và hóa đơn phù hợp với máy sẽ dùng trước hội đồng.
 
----
+## Kiểm tra trước khi mở WPF
 
-## 0. Mở đầu (2 phút)
+1. Trong `QLPT.API/appsettings.json`, kiểm tra `DefaultConnection` trỏ đúng SQL Server và CSDL của máy hiện tại. Không chạy `01_Schema.sql`, `02_SampleData.sql` hoặc `themrangbuoc.sql` trên CSDL demo.
+2. Chạy API bằng `dotnet run --project QLPT.API/QLPT.API.csproj --launch-profile http`. Truy cập `http://localhost:5180/api/health` và đợi `database: connected`. Truy cập trực tiếp `http://localhost:5180/swagger/v1/swagger.json` và kiểm tra trả JSON, rồi mở Swagger UI nếu cần.
+3. Chạy WPF trong terminal khác bằng `dotnet run --project QLPT.WPF/QLPT.WPF.csproj`. Đăng nhập bằng tài khoản quản trị đang dùng trên CSDL này. Kiểm tra Dashboard, danh sách phòng, khách thuê và hợp đồng tải được; ghi lại số phòng thực tế để nói đúng với dữ liệu trình bày.
+4. Nếu kiểm tra sao lưu, mở mục Sao lưu để xem lịch sử. API ưu tiên `Backups:SqlServerDirectory` nếu đã cấu hình, nếu không sẽ dùng thư mục sao lưu mặc định của SQL Server. Dịch vụ SQL cần quyền ghi; tài khoản SQL cần quyền sao lưu, khôi phục, tạo CSDL và đọc `msdb`. Nút **Khôi phục bản sao** tạo một CSDL mới có tên `QLPT_Restore_...`, không ghi đè CSDL đang chạy.
 
-| Bước | Thao tác | Điểm cần nói |
-|---|---|---|
-| 0.1 | Đăng nhập với mật khẩu sai | Thông báo chung, không lộ là sai tên hay sai mật khẩu. Mật khẩu lưu bằng bcrypt. |
-| 0.2 | Đăng nhập `admin` / `Admin@123` | Phân quyền: Admin thấy đủ menu, khách thuê chỉ thấy 2 mục. |
-| 0.3 | Xem **Dashboard** | 14 phòng (8 đang thuê, 4 trống, 1 đặt cọc, 1 bảo trì), công nợ **30.773.000 đ**. Biểu đồ doanh thu 6 kỳ, biểu đồ vòng tình trạng phòng. Bảng sắp hết hạn có **HĐ#5 – Phòng A203 – Phạm Thị Dung (31/10/2026)**. |
-| 0.4 | Bật **chế độ tối** | Toàn bộ giao diện, biểu đồ và dialog đổi màu theo. |
-| 0.5 | Gõ `dien nuoc` vào ô tìm kiếm ở sidebar | Tìm menu không cần gõ dấu. |
+## Trình tự trình bày gợi ý (10–15 phút)
 
----
+| Luồng | Thao tác nên trình bày | Điều cần kiểm tra |
+| --- | --- | --- |
+| Tổng quan và phân quyền | Chủ trọ xem Dashboard → Cơ sở → Phòng → Tài khoản. Tại Tài khoản, chủ trọ có thể cấp Customer gắn hồ sơ khách cho mobile, Manager gắn một hay nhiều cơ sở, hoặc BackupOperator cho người phụ trách sao lưu. | WPF cho Admin, Manager và BackupOperator đăng nhập. Manager quản lý phòng, tiếp nhận và sửa khách, đặt/nhận phòng, tạo/gia hạn/thanh lý hợp đồng, cư trú, chỉ số điện nước và sửa chữa trong cơ sở được giao; có thể kiểm kê hiện vật đang ở phòng thuộc cơ sở đó. Chủ trọ giữ quyền tài khoản, cấu hình toàn hệ thống, hóa đơn/tài chính, kho chung, điều chuyển và thanh lý hiện vật, sao lưu. BackupOperator chỉ xem/tạo bản sao lưu. Khách đã thuê cơ sở A có thể đặt phòng trống ở cơ sở B bằng cùng hồ sơ; trước khi ký hợp đồng B phải kết thúc cư trú/hợp đồng A. |
+| Tài sản riêng lẻ | Chọn mẫu **Giường** → **Nhập kho**, điền 50 → bấm mẫu để xem 50 mã `TS...`; chọn phòng chưa có hợp đồng hiệu lực → **Chuyển số lượng từ kho**, điền 20 → tồn kho còn 30. Chọn đúng mã hiện vật để xem lịch sử sửa chữa/kiểm kê. | Nhập số lượng một lần nhưng mỗi chiếc có mã và lịch sử riêng. Giá mua ở phiếu nhập là giá **mỗi chiếc**. Điều chuyển giữ nguyên mã; không xuất quá tồn kho. Muốn nhận diện đúng chiếc ngoài đời, dán mã hoặc QR tương ứng lên hiện vật. **Ghi nhận tại phòng** là luồng tạo hiện vật mới mua rồi đưa thẳng vào phòng, không trừ tồn kho. Chỉ thử thao tác ghi trên CSDL test. |
+| Đặt và nhận phòng | Chọn một phòng **đang trống** và một khách có sẵn trong danh sách; nếu có phiếu đặt phù hợp, mở luồng nhận phòng/tạo hợp đồng | Ô tìm kiếm lọc theo tên/CCCD/SĐT, không nhận mã hoặc tên tự gõ tùy ý; phòng/khách đã chọn khớp phiếu đặt. Tập bước lưu trên bản sao trước vì nó ghi thật. |
+| Chỉ số và hóa đơn | Mở một phòng đang thuê, xem kỳ điện/nước và hóa đơn; nếu chuẩn bị kỳ mới thì ghi chỉ số trước khi lập hóa đơn | Chỉ số không giảm; kỳ đã có hóa đơn không sửa được; lập hóa đơn trùng kỳ bị chặn. Với điện, có thể chọn ảnh đồng hồ, đọc OCR như **gợi ý**, đối chiếu ảnh và xác nhận hoặc nhập tay. Chuẩn bị ảnh rõ vùng chữ số; OCR có thể đọc sai ảnh thực tế. |
+| Thu tiền | Dùng hóa đơn còn nợ đã chọn trước; nếu trình bày ghi tiền, thu một phần trên bản sao | Số tiền không vượt dư nợ; hóa đơn, công nợ và sổ thu chi cập nhật một lần. |
+| Vi phạm và sửa chữa | Xem vi phạm theo tên phòng/khách; xử lý một trường hợp đã chuẩn bị. Khi hoàn thành sửa chữa một thiết bị cụ thể, chọn đúng mã hiện vật của phòng | Xử lý vi phạm chốt mức phạt và gửi thông báo, **chưa ghi nhận đã thu tiền**. Chủ trọ chọn vi phạm đã xử lý → Đưa phạt vào hóa đơn, chọn hóa đơn phù hợp chưa thu tiền; khoản phạt không tự gộp và chỉ được tính một lần. Nếu chọn hiện vật, lịch sử của chiếc đó có một sự kiện sửa chữa gắn mã yêu cầu; sửa chữa chung của phòng thì để trống. |
+| Báo cáo và sao lưu | Xem doanh thu/công nợ, xuất Excel; mở lịch sử sao lưu. Có thể chọn một bản rồi bấm **Khôi phục bản sao** | Tệp `.bak` và CSDL phục hồi nằm trên máy SQL Server. Sau khi phục hồi báo `ONLINE`, quản trị viên kiểm tra dữ liệu và quyết định có đổi chuỗi kết nối API hay không. CSDL phục hồi chiếm thêm dung lượng; dọn các bản thử trong SQL Server sau khi kiểm tra. |
+| Xuất biểu mẫu | Ở trang Hợp đồng, chọn một hợp đồng rồi bấm **Xuất HĐ** hoặc **Xuất bàn giao**; nếu có nhiều biên bản, chọn đúng lần nhận/trả phòng | Ứng dụng đọc lại hợp đồng, khách, phòng và biên bản đã lưu từ API trước khi xuất. Tệp HTML mở trong trình duyệt để in hoặc lưu PDF. Hợp đồng có chỗ trống thông tin bên cho thuê; hai bên kiểm tra và ký trước khi sử dụng. |
+| Cư trú phía khách | Khách có tài khoản mobile mở **Cư trú của tôi**, nhập địa chỉ thường trú và thông tin bổ sung rồi gửi; chủ trọ hoặc quản lý đúng cơ sở mở **Cư trú → Xem / duyệt khai báo** để xác nhận hoặc trả lại kèm lý do | Lần gửi và lý do trả lại được giữ trong lịch sử; khách thấy trạng thái và có thể gửi lại sau khi bổ sung. Khách không tự sửa ngày vào/rời hoặc tự duyệt. Đây là xác nhận nội bộ, chưa nộp dữ liệu tới cơ quan nhà nước. Cần thử giao diện mobile bằng Flutter trước khi trình bày trực tiếp. |
 
-## ① Phòng & thiết bị → Đặt phòng → Hợp đồng → Trả phòng
+Nếu cần demo báo trả, thanh lý hoặc hoàn cọc, làm **cuối cùng trên bản sao CSDL** sau khi đã kiểm tra trước công nợ và tiền cọc. Các thao tác này đổi trạng thái hợp đồng, phòng và sổ thu chi thật. Không cần thêm/bớt phòng chỉ để khớp con số trong một tài liệu cũ.
 
-| Bước | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| 1.1 | **Đặt phòng** cho **Phòng A104** (đang trống), cọc `2000000` | Ô tiền tự định dạng `2.000.000 đ`. Phòng chuyển *Đã đặt cọc*, **Sổ thu chi** tự có phiếu thu "Thu tiền đặt cọc phòng A104". |
-| 1.2 | **Hủy** đặt phòng vừa tạo, chọn hoàn cọc | Phòng trở lại *Trống*, có **phiếu chi** hoàn cọc. |
-| 1.3 | *Trường hợp bị từ chối:* đặt một phòng đang thuê | Hệ thống chặn, chỉ cho đặt phòng *Trống*. |
-| 1.4 | **Nhận phòng**: tạo hợp đồng từ booking **Phòng B102 – Trương Mỹ Linh** (cọc 2.000.000 đ, hẹn nhận 10/10) | Hệ thống tự làm cùng lúc: phòng sang *Đang thuê*, booking sang *Đã nhận phòng*, **thêm cư trú**, **đăng ký dịch vụ Điện và Nước**, ghi phiếu thu phần cọc còn thiếu. |
-| 1.5 | **Bàn giao tài sản**: gán đồ đạc cho phòng B102 | Danh sách tài sản của phòng, sửa và xóa được. |
-| 1.6 | *Trường hợp bị từ chối:* **Cư trú**, thêm một khách đang ở hợp đồng khác | Bị chặn với thông báo "đang cư trú ở hợp đồng #…". |
-| 1.7 | **Gia hạn HĐ#5** (A203): chọn ngày kết thúc mới, có thể đổi giá thuê | Có bản ghi gia hạn, khách nhận **thông báo**. |
+## Giới hạn cần trình bày trung thực
 
----
+- Đề cương có OCR chỉ số điện từ ảnh; WPF cho khoanh vùng các ô số đen, thử OCR trên máy rồi dùng AI qua API nếu chưa đọc chắc chắn. Xem [OCR_SETUP.md](../QLPT.API/OCR_SETUP.md) để cấu hình Gemini/OpenAI; khởi động lại API sau khi thêm key. Hai ảnh công tơ thật đã được Gemini đọc lần lượt `08424` và `08867` khi khoanh đúng vùng số; bước bấm lưu trong WPF vẫn cần kiểm tra trực tiếp. Người dùng luôn phải đối chiếu ảnh và xác nhận trước khi lưu. Số đỏ trên loại công tơ này là `1/10 kWh`, không được ghép thành chữ số hàng đơn vị.
+- Sao lưu và khôi phục bản sao đã có trong API/WPF. Khôi phục trực tiếp ghi đè CSDL đang vận hành chưa được hỗ trợ; để chuyển sang bản phục hồi, quản trị viên phải kiểm tra dữ liệu và đổi chuỗi kết nối API theo quy trình triển khai. Cần có quyền SQL và đủ dung lượng cho CSDL mới.
+- WPF xuất được báo cáo Excel, hợp đồng và biên bản bàn giao HTML để in/lưu PDF. Biểu mẫu phản ánh dữ liệu hiện tại; chưa có quản lý bản ký điện tử hoặc lưu bản đã ký.
+- Bổ sung 29/10: chủ trọ có thể đưa khoản phạt đã xử lý vào hóa đơn phù hợp chưa thu tiền. Thao tác tăng công nợ, không tự thu tiền; khóa tham chiếu chống tính trùng. Xem tài liệu [API tích hợp](../HO_SO_BAN_GIAO/API_MOBILE_20261029.md).
+- Thông báo/nhắc nhở hiện tải từ CSDL và do quản trị viên kích hoạt; không giới thiệu là thông báo thời gian thực hoặc tác vụ tự chạy nền.
+- Lịch sử sửa chữa tài sản ghi theo mã hiện vật khi quản lý/chủ trọ chọn hiện vật và thêm sự kiện, hoặc chọn hiện vật khi hoàn thành yêu cầu sửa chữa mới. Yêu cầu sửa chữa cũ của cả phòng không tự quy cho một chiếc giường cụ thể.
 
-## ② Chỉ số điện nước → Tính tiền → Hóa đơn → Thu tiền → Công nợ
-
-| Bước | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| 2.1 | **Chỉ số điện nước**: ghi chỉ số **tháng 10/2026** cho một phòng (DB đang có đến 9/2026) | Lưu chỉ số cũ và mới của kỳ. |
-| 2.2 | **Hóa đơn** → *Tạo tự động* tháng 10 | Mỗi hóa đơn gồm các dòng: tiền phòng; tiền điện (chỉ số A → B kWh × đơn giá); nước tương tự; phí các dịch vụ khác. Không tạo trùng kỳ. |
-| 2.3 | *Trường hợp bị từ chối:* tạo hóa đơn cho phòng **chưa ghi chỉ số** | Báo thiếu chỉ số điện/nước của kỳ. |
-| 2.4 | **Thu tiền** hóa đơn của **HĐ#2 – Phòng A102** (nợ 3.090.000 đ): thu trước `1000000` | Hóa đơn sang *Thanh toán một phần*, Sổ thu chi có phiếu thu, **công nợ trên Dashboard giảm**. |
-| 2.5 | **Báo cáo**: xem các tab | Biểu đồ doanh thu 12 kỳ, biểu đồ **công nợ theo phòng**, tab *Doanh thu theo kỳ* (bảng số liệu đi kèm biểu đồ). |
-| 2.6 | **Xuất Excel** rồi mở file | File có 4 sheet. Số tiền là số thật (lọc và sắp xếp được), dòng tổng dùng công thức `SUM`. |
-
----
-
-## ③ Vi phạm → Xử lý → Phản hồi / Thông báo → Nhắc nhở
-
-| Bước | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| 3.1 | **Vi phạm**: có 2 vụ *Chưa xử lý*. Bấm xử lý → *Phạt tiền*, tick gửi thông báo | Vi phạm sang *Đã xử lý*, khách nhận thông báo. |
-| 3.2 | **Thông báo** → **Nhắc nhở** | Tự gửi nhắc nợ cho khách đang nợ và nhắc HĐ#5 sắp hết hạn. Bấm lần 2 trong cùng ngày thì **không gửi trùng**. |
-| 3.3 | **Tài khoản** → tạo tài khoản *Customer* cho **Trương Mỹ Linh (mã khách 11)**, là người vừa nhận phòng ở bước 1.4 | Mỗi khách chỉ có một tài khoản, mật khẩu được mã hóa. |
-| 3.4 | Đăng xuất → đăng nhập bằng tài khoản vừa tạo | Menu chỉ còn **Thông tin của tôi** (hợp đồng, hóa đơn) và **Thông báo**. |
-| 3.5 | Đọc một thông báo → **Phản hồi** | Phản hồi được gửi về cho admin. |
-| 3.6 | Đăng nhập lại `admin` → **Thông báo** | Cột trạng thái hiện "Đã đọc x/y · z phản hồi", bấm vào để xem nội dung phản hồi. |
-| 3.7 | **Sửa chữa**: yêu cầu *Chờ tiếp nhận* → *Đang sửa* → *Đã hoàn thành*, nhập chi phí | Trạng thái và chi phí được cập nhật. |
-
----
-
-## Kết: Báo trả & thanh lý (làm cuối vì không hoàn tác được)
-
-| Bước | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| 4.1 | **Báo trả phòng** cho HĐ#2 (A102) | Ghi nhận yêu cầu trả phòng. |
-| 4.2 | **Thanh lý HĐ#2**. Sau bước 2.4, HĐ#2 còn nợ 2.090.000 đ, cọc 2.600.000 đ | Cọc được **cấn trừ vào hóa đơn còn nợ** (từ cũ đến mới), phần dư **510.000 đ hoàn lại qua phiếu chi**. Hợp đồng *Đã thanh lý*, phòng *Trống*, cư trú và dịch vụ kết thúc, báo trả *Đã hoàn tất*, khách nhận thông báo. |
-
----
-
-## Dữ liệu tham khảo (10/10/2026)
-
-**Phòng trống:** A104 (3.800.000 đ), A202 (4.500.000 đ), B201 (3.200.000 đ), C101 (2.400.000 đ).
-
-**Hợp đồng đang nợ:**
-
-| Hợp đồng | Phòng | Tiền cọc | Còn nợ |
-|---|---|---:|---:|
-| HĐ#2 | A102 | 2.600.000 đ | 3.090.000 đ |
-| HĐ#3 | A103 | 3.800.000 đ | 6.455.000 đ |
-| HĐ#5 | A203 | 3.000.000 đ | 7.050.000 đ |
-| HĐ#6 | B101 | 2.700.000 đ | 3.318.000 đ |
-| HĐ#7 | B202 | 5.800.000 đ | 6.487.500 đ |
-| HĐ#8 | C102 | 3.600.000 đ | 4.372.500 đ |
-
-**Khách chưa có tài khoản** (dùng cho bước 3.3): #9 Ngô Thanh Mai, #10 Lý Quốc Khánh,
-#11 Trương Mỹ Linh, #12 Nguyễn Thị Hoa.
-
----
-
-## Những điểm nên tránh hoặc chuẩn bị câu trả lời
-
-- **Sao lưu / khôi phục chưa làm thật.** Dữ liệu sao lưu chỉ nằm trong bộ nhớ của API. Không demo, hoặc nói rõ là phạm vi chưa làm.
-- **Sửa tài khoản chưa đổi được mật khẩu**, chỉ đổi được vai trò. Demo vai khách thì tạo tài khoản mới (bước 3.3).
-- **Chưa có xóa mềm khách thuê**, vì cần thêm cột vào DB.
-- **Phòng chưa đặt số người tối đa**, nên không demo được trường hợp phòng đầy.
-- **API GET chưa yêu cầu đăng nhập**, ai biết địa chỉ API cũng đọc được dữ liệu. Nên có câu trả lời sẵn nếu bị hỏi về bảo mật.
+Kết quả kiểm thử API/WPF với CSDL test riêng trước đây nằm ở [TEST_REPORT_API_WPF.md](../TEST_REPORT_API_WPF.md). Khi đổi máy hoặc đổi CSDL, chạy lại các bước kiểm tra đầu tài liệu này trước buổi báo cáo.

@@ -13,3 +13,7 @@
 .env.*
 *.pfx
 *.p12
+# Full database handover exports contain tenant data and password hashes; deliver privately.
+HO_SO_BAN_GIAO/SQL_CHOT/*.sql
+HO_SO_BAN_GIAO/SQL_CHOT/*.bak
+tmp/sql-*.sql

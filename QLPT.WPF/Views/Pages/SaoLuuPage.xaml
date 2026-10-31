@@ -12,6 +12,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Thông báo thân thiện khi API chưa hỗ trợ sao lưu -->
@@ -27,15 +28,16 @@
                     </Style.Triggers>
                 </Style>
             </Border.Style>
-            <StackPanel Orientation="Horizontal">
+            <DockPanel>
                 <md:PackIcon Kind="Information" Width="20" Height="20"
+                             DockPanel.Dock="Left"
                              Foreground="{DynamicResource Win11TextPrimaryBrush}"
                              VerticalAlignment="Center"/>
                 <TextBlock Text="{Binding InfoMessage}"
                            Foreground="{DynamicResource Win11TextPrimaryBrush}"
                            FontSize="13" Margin="8,0,0,0"
                            VerticalAlignment="Center" TextWrapping="Wrap"/>
-            </StackPanel>
+            </DockPanel>
         </Border>
 
         <ctl:CrudTable Grid.Row="1"
@@ -43,21 +45,57 @@
                        SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                        ReloadCommand="{Binding LoadCommand}"
                        AddCommand="{Binding TaoSaoLuuCommand}"
-                       DeleteCommand="{Binding XoaCommand}"
                        IsBusy="{Binding IsBusy}"
                        ErrorMessage="{Binding ErrorMessage}"
                        AddLabel="Tạo bản sao lưu"
                        AddIcon="DatabaseExport"
-                       DeleteLabel="Xóa bản sao lưu này"
+                       ShowDelete="False"
                        ShowEdit="False"
                        SearchHint="Tìm theo tên tệp, ngày tạo…">
+
+            <ctl:CrudTable.ExtraActions>
+                <Button Command="{Binding KhoiPhucBanSaoCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="36" Padding="12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="DatabaseImport" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Khôi phục bản sao" Margin="6,0,0,0" FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </ctl:CrudTable.ExtraActions>
 
             <ctl:CrudTable.Columns>
                 <DataGridTextColumn Header="ID"         Binding="{Binding Id}"        Width="0.8*" MinWidth="80"/>
                 <DataGridTextColumn Header="TÊN TỆP"    Binding="{Binding FileName}"  Width="*"/>
                 <DataGridTextColumn Header="NGÀY TẠO"   Binding="{Binding NgayTao}"   Width="1.8*" MinWidth="180"/>
                 <DataGridTextColumn Header="KÍCH THƯỚC" Binding="{Binding KichThuoc}" Width="1.2*" MinWidth="120"/>
+                <DataGridTextColumn Header="TRẠNG THÁI" Binding="{Binding TrangThai}" Width="1.4*" MinWidth="160"/>
             </ctl:CrudTable.Columns>
         </ctl:CrudTable>
+
+        <Border Grid.Row="2" Background="{DynamicResource Win11SurfaceBrush}"
+                BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="1"
+                CornerRadius="8" Padding="12" Margin="0,10,0,0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedItem}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <DockPanel LastChildFill="True">
+                <Button DockPanel.Dock="Right" Content="Sao chép đường dẫn"
+                        Command="{Binding SaoChepDuongDanCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}" Margin="12,0,0,0"/>
+                <StackPanel>
+                    <TextBlock Text="Đường dẫn tệp trên máy SQL Server" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding SelectedItem.DuongDan}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource Win11TextSecondaryBrush}"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
     </Grid>
 </UserControl>

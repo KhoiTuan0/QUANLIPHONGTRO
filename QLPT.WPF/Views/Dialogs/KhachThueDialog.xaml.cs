@@ -14,6 +14,11 @@ public partial class KhachThueDialog : Window
     {
         InitializeComponent();
         _item = item;
+        if (Session.IsManager && item == null)
+        {
+            PickCoSo.Visibility = Visibility.Visible;
+            BtnTiepNhan.Visibility = Visibility.Visible;
+        }
 
         if (item != null)
         {
@@ -52,19 +57,24 @@ public partial class KhachThueDialog : Window
         }
 
         var cccd = TxtCccd.Text.Trim();
-        if (!string.IsNullOrEmpty(cccd) && !Regex.IsMatch(cccd, @"^\d{12}$"))
+        if (!Regex.IsMatch(cccd, @"^\d{12}$"))
         {
             TxtError.Text = "CCCD phải gồm đúng 12 chữ số.";
             return;
         }
 
         var sdt = TxtSdt.Text.Trim();
-        if (!string.IsNullOrEmpty(sdt) && !Regex.IsMatch(sdt, @"^0\d{9}$"))
+        if (!Regex.IsMatch(sdt, @"^0\d{9}$"))
         {
             TxtError.Text = "SĐT phải gồm 10 chữ số và bắt đầu bằng 0.";
             return;
         }
         var email = TxtEmail.Text.Trim();
+        if (string.IsNullOrWhiteSpace(TxtDiaChi.Text))
+        {
+            TxtError.Text = "Địa chỉ không được để trống.";
+            return;
+        }
         if (!string.IsNullOrEmpty(email) && !KiemTra.Email(email))
         {
             TxtError.Text = "Email không đúng định dạng (VD: ten@gmail.com).";
@@ -72,10 +82,18 @@ public partial class KhachThueDialog : Window
         }
 
         var gioiTinh = (CboGioiTinh.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Nam";
+        int? siteId = null;
+        if (_item == null && Session.IsManager)
+        {
+            if (!PickCoSo.TryGetSelectedId(out int selectedSite))
+            { TxtError.Text = "Chọn cơ sở tiếp nhận khách."; return; }
+            siteId = selectedSite;
+        }
 
         BtnSave.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             var body = new
             {
                 hoTen = hoTen,
@@ -83,7 +101,8 @@ public partial class KhachThueDialog : Window
                 soDienThoai = sdt,
                 gioiTinh = gioiTinh,
                 email = TxtEmail.Text.Trim(),
-                diaChi = TxtDiaChi.Text.Trim()
+                diaChi = TxtDiaChi.Text.Trim(),
+                maCoSoTiepNhan = siteId
             };
 
             if (_item == null)
@@ -91,6 +110,7 @@ public partial class KhachThueDialog : Window
             else
                 await ApiClient.PutAsync($"/api/KhachThue/{_item.MaKhach}", body);
 
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)
@@ -101,6 +121,26 @@ public partial class KhachThueDialog : Window
         {
             BtnSave.IsEnabled = true;
         }
+    }
+
+    private async void TiepNhan_Click(object sender, RoutedEventArgs e)
+    {
+        TxtError.Text = "";
+        if (!PickCoSo.TryGetSelectedId(out int siteId))
+        { TxtError.Text = "Chọn cơ sở tiếp nhận trước."; return; }
+        var cccd = TxtCccd.Text.Trim();
+        if (!Regex.IsMatch(cccd, @"^\d{12}$"))
+        { TxtError.Text = "Nhập đúng CCCD 12 chữ số của khách đã có hồ sơ."; return; }
+        BtnTiepNhan.IsEnabled = false;
+        try
+        {
+            using var guard = new DialogSaveGuard(this);
+            await ApiClient.PostAsync("/api/KhachThue/tiep-nhan", new { cccd, maCoSo = siteId });
+            guard.Complete();
+            DialogResult = true;
+        }
+        catch (Exception ex) { TxtError.Text = ex.Message; }
+        finally { BtnTiepNhan.IsEnabled = true; }
     }
 
     private void BtnCancel_Click(object sender, RoutedEventArgs e) => DialogResult = false;

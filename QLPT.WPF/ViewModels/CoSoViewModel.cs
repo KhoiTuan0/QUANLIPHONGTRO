@@ -24,6 +24,8 @@ public partial class CoSoViewModel : BaseViewModel
                 MaCoSo = ApiClient.ElStr(el, "maCoSo"),
                 TenCoSo = ApiClient.ElStr(el, "tenCoSo"),
                 DiaChi = ApiClient.ElStr(el, "diaChi"),
+                CoTheSuaDiaChi = !el.TryGetProperty("coTheSuaDiaChi", out var canEditAddress)
+                    || canEditAddress.ValueKind != JsonValueKind.False,
                 SoDienThoai = ApiClient.ElStr(el, "soDienThoai"),
                 MoTa = ApiClient.ElStr(el, "moTa")
             });
@@ -66,6 +68,7 @@ public class CoSoItem
     public string MaCoSo { get; set; } = "";
     public string TenCoSo { get; set; } = "";
     public string DiaChi { get; set; } = "";
+    public bool CoTheSuaDiaChi { get; set; } = true;
     public string SoDienThoai { get; set; } = "";
     public string MoTa { get; set; } = "";
 }

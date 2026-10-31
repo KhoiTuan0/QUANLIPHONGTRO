@@ -30,6 +30,8 @@ public partial class ChiSoViewModel : BaseViewModel
                 TenPhong = ApiClient.ElStr(el, "tenPhong"),
                 KyGhi = ApiClient.ElStr(el, "ngayGhi"),
                 ThangNam = string.IsNullOrEmpty(thang) ? "" : $"T{thang}/{nam}",
+                Thang = int.TryParse(thang, out var thangSo) ? thangSo : 0,
+                Nam = int.TryParse(nam, out var namSo) ? namSo : 0,
                 Loai = ApiClient.ElStr(el, "loaiChiSo"),
                 ChiSoCu = cu,
                 ChiSoMoi = moi,
@@ -43,6 +45,14 @@ public partial class ChiSoViewModel : BaseViewModel
     private async Task ThemChiSoAsync()
     {
         var dlg = new Views.Dialogs.ChiSoDialog();
+        if (dlg.ShowDialog() == true) await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task SuaChiSoAsync()
+    {
+        if (SelectedItem == null) { ErrorMessage = "Vui lòng chọn một dòng."; return; }
+        var dlg = new Views.Dialogs.ChiSoDialog(SelectedItem);
         if (dlg.ShowDialog() == true) await LoadAsync();
     }
 
@@ -69,6 +79,8 @@ public class ChiSoItem
     public string TenPhong { get; set; } = "";
     public string KyGhi { get; set; } = "";
     public string ThangNam { get; set; } = "";
+    public int Thang { get; set; }
+    public int Nam { get; set; }
     public string Loai { get; set; } = "";
     public decimal ChiSoCu { get; set; }
     public decimal ChiSoMoi { get; set; }

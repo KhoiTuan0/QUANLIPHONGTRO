@@ -37,6 +37,8 @@ namespace QLPT.API.Controllers
             try
             {
                 if (model == null) return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ" });
+                if (model.GiaMacDinh is null or < 100_000)
+                    return BadRequest(new { success = false, message = "Giá mặc định phải từ 100.000 đ trở lên." });
 
                 _context.LoaiPhongs.Add(model);
                 await _context.SaveChangesAsync();
@@ -59,6 +61,8 @@ namespace QLPT.API.Controllers
             {
                 var item = await _context.LoaiPhongs.FindAsync(id);
                 if (item == null) return NotFound(new { success = false, message = "Không tìm thấy loại phòng" });
+                if (model.GiaMacDinh.HasValue && model.GiaMacDinh < 100_000)
+                    return BadRequest(new { success = false, message = "Giá mặc định phải từ 100.000 đ trở lên." });
 
                 item.TenLoaiPhong = model.TenLoaiPhong ?? item.TenLoaiPhong;
                 item.DienTich     = model.DienTich     ?? item.DienTich;

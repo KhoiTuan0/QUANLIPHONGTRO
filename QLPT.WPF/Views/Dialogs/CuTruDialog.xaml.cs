@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using QLPT.WPF.Services;
 
 namespace QLPT.WPF.Views.Dialogs;
@@ -9,27 +9,27 @@ public partial class CuTruDialog : Window
     public CuTruDialog(string? maHopDong)
     {
         InitializeComponent();
-        TxtMaHopDong.Text = maHopDong ?? "";
+        PickMaHopDong.SelectedId = maHopDong ?? "";
         DpNgayVao.SelectedDate = DateTime.Today;
-        Loaded += (_, _) => (string.IsNullOrEmpty(TxtMaHopDong.Text) ? TxtMaHopDong : TxtMaKhach).Focus();
+        Loaded += (_, _) => (string.IsNullOrEmpty(PickMaHopDong.SelectedId) ? PickMaHopDong : PickMaKhach).Focus();
     }
 
     private async void BtnOk_Click(object sender, RoutedEventArgs e)
     {
         TxtError.Visibility = Visibility.Collapsed;
 
-        if (!KiemTra.Ma(TxtMaHopDong.Text, out int maHopDong))
-        { ShowError("Mã hợp đồng phải là số nguyên dương."); return; }
+        if (!PickMaHopDong.TryGetSelectedId(out int maHopDong))
+        { ShowError("Vui lòng chọn hợp đồng từ danh sách đã tải."); return; }
 
-        if (!KiemTra.Ma(TxtMaKhach.Text, out int maKhach))
-        { ShowError("Mã khách phải là số nguyên dương."); return; }
+        if (!PickMaKhach.TryGetSelectedId(out int maKhach))
+        { ShowError("Vui lòng chọn khách thuê từ danh sách đã tải."); return; }
 
         if (DpNgayVao.SelectedDate == null)
         { ShowError("Vui lòng chọn ngày vào."); return; }
 
         try
         {
-            IsEnabled = false;
+            using var saveGuard = new DialogSaveGuard(this);
             await ApiClient.PostAsync("/api/DanhMucMoRong/cu-tru", new
             {
                 maHopDong,
@@ -38,10 +38,10 @@ public partial class CuTruDialog : Window
                 trangThaiCuTru = "Đang ở",
                 trangThaiKhaiBao = "Chưa khai báo"
             });
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex) { ShowError(ex.Message); }
-        finally { IsEnabled = true; }
     }
 
     private void ShowError(string msg)

@@ -28,7 +28,8 @@ public partial class ThuChiViewModel : BaseViewModel
                 SoTienDisplay = VnMoney.FormatD(tien),
                 MoTa = ApiClient.ElStr(el, "noiDung"),
                 NgayGhiNhan = ApiClient.ElStr(el, "ngayLap"),
-                NguoiGhiNhan = ApiClient.ElStr(el, "nguoiNopNhan")
+                NguoiGhiNhan = ApiClient.ElStr(el, "nguoiNopNhan"),
+                CoTheSuaXoa = bool.TryParse(ApiClient.ElStr(el, "coTheSuaXoa"), out var editable) && editable
             });
         }
         Items = list;
@@ -45,6 +46,8 @@ public partial class ThuChiViewModel : BaseViewModel
     private async Task XoaAsync()
     {
         if (SelectedItem == null) { ErrorMessage = "Vui lòng chọn một dòng."; return; }
+        if (!SelectedItem.CoTheSuaXoa)
+        { ErrorMessage = "Phiếu tự sinh từ hóa đơn, đặt cọc hoặc sửa chữa không thể xóa tại sổ thu chi."; return; }
         if (!Views.Dialogs.ConfirmDialog.Delete(
                 "Phiếu thu chi này sẽ bị xóa khỏi sổ.",
                 $"#{SelectedItem.MaThuChi} — {SelectedItem.Loai} · {SelectedItem.MoTa}",
@@ -66,4 +69,6 @@ public class ThuChiItem
     public string MoTa { get; set; } = "";
     public string NgayGhiNhan { get; set; } = "";
     public string NguoiGhiNhan { get; set; } = "";
+    public bool CoTheSuaXoa { get; set; }
+    public string NguonDisplay => CoTheSuaXoa ? "Nhập tay" : "Nghiệp vụ";
 }

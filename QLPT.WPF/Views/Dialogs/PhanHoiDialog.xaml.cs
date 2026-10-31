@@ -26,11 +26,13 @@ public partial class PhanHoiDialog : Window
         BtnSend.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             await ApiClient.PostAsync($"/api/ThongBao/{_maThongBao}/phan-hoi", new
             {
                 maTaiKhoan = Session.MaTaiKhoan,
                 noiDung = TxtNoiDung.Text.Trim()
             });
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)

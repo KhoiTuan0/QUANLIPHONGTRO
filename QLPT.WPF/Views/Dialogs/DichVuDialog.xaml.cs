@@ -1,4 +1,5 @@
 using QLPT.WPF.Services;
+using QLPT.WPF.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -6,9 +7,18 @@ namespace QLPT.WPF.Views.Dialogs;
 
 public partial class DichVuDialog : Window
 {
-    public DichVuDialog()
+    private readonly DichVuItem? _item;
+
+    public DichVuDialog(DichVuItem? item = null)
     {
         InitializeComponent();
+        _item = item;
+        if (item == null) return;
+        TxtTitle.Text = "Sửa dịch vụ";
+        TxtTen.Text = item.TenDichVu;
+        TxtDonViTinh.Text = item.DonViTinh;
+        TxtDonGia.Text = item.DonGia.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        CboTrangThai.SelectedIndex = item.TrangThai == "Ngừng" ? 1 : 0;
     }
 
     private async void BtnSave_Click(object sender, RoutedEventArgs e)
@@ -33,6 +43,7 @@ public partial class DichVuDialog : Window
         BtnSave.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             var body = new
             {
                 tenDichVu = ten,
@@ -40,7 +51,11 @@ public partial class DichVuDialog : Window
                 donGia = donGia,
                 trangThai = trangThai
             };
-            await ApiClient.PostAsync("/api/DichVu", body);
+            if (_item == null)
+                await ApiClient.PostAsync("/api/DichVu", body);
+            else
+                await ApiClient.PutAsync($"/api/DichVu/{_item.MaDichVu}", body);
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)

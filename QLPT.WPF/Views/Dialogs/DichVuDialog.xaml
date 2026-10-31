@@ -12,7 +12,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Border Padding="28">
         <StackPanel>
-            <TextBlock Text="Thêm dịch vụ" FontSize="18" FontWeight="Bold"
+            <TextBlock x:Name="TxtTitle" Text="Thêm dịch vụ" FontSize="18" FontWeight="Bold"
                        Foreground="{DynamicResource Win11TextPrimaryBrush}" Margin="0,0,0,20"/>
 
             <TextBox x:Name="TxtTen" MaxLength="100" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Tên dịch vụ *"

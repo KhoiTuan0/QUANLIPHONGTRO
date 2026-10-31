@@ -41,15 +41,14 @@ public partial class LoginViewModel : BaseViewModel
                 throw new Exception("API đăng nhập không trả mã tài khoản hợp lệ.");
 
             string vt = ApiClient.ElStr(el, "vaiTro", "VaiTro");
-            if (!string.Equals(vt, "Admin", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(vt, "Customer", StringComparison.OrdinalIgnoreCase))
-                throw new Exception("API trả vai trò không hợp lệ.");
+            if (vt is not ("Admin" or "Manager" or "BackupOperator"))
+                throw new Exception("Bản desktop dành cho chủ trọ, quản lý và người phụ trách sao lưu. Khách thuê sử dụng ứng dụng mobile.");
 
             string mk = ApiClient.ElStr(el, "maKhach", "MaKhach");
             int? customerId = int.TryParse(mk, out int mkv) && mkv > 0 ? mkv : null;
 
-            if (vt.Equals("Customer", StringComparison.OrdinalIgnoreCase) && !customerId.HasValue)
-                throw new Exception("Tài khoản Customer chưa được liên kết với khách thuê.");
+            if (!ApiClient.HasSessionCookie)
+                throw new Exception("Chưa nhận được phiên đăng nhập từ máy chủ. Vui lòng đăng nhập lại.");
 
             Session.MaTaiKhoan = accountId;
             Session.VaiTro = vt.Trim();
@@ -67,12 +66,4 @@ public partial class LoginViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
-    private void Register()
-    {
-        try { ApiClient.SetBaseUrl(ApiUrl.Trim()); }
-        catch (Exception ex) { StatusMessage = ex.Message; IsStatusError = true; return; }
-        var win = new Views.RegisterWindow();
-        win.ShowDialog();
-    }
 }

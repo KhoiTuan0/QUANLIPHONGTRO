@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="QLPT.WPF.Views.Pages.DatPhongPage"
+<UserControl x:Class="QLPT.WPF.Views.Pages.DatPhongPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -18,6 +18,11 @@
 
         <!-- Nghiệp vụ riêng: hủy giữ chỗ cho dòng đang chọn -->
         <ctl:CrudTable.ExtraActions>
+            <WrapPanel>
+            <Button Content="Yêu cầu hủy" Command="{Binding YeuCauHuyCommand}"
+                    Style="{StaticResource MaterialDesignOutlinedButton}" Height="36" Margin="0,0,8,0" Padding="12,0"/>
+            <Button Content="Nhận phòng" Command="{Binding NhanPhongCommand}"
+                    Style="{StaticResource MaterialDesignOutlinedButton}" Height="36" Margin="0,0,8,0" Padding="12,0"/>
             <Button Command="{Binding HuyGiuChoCommand}"
                     Style="{StaticResource MaterialDesignOutlinedButton}"
                     Height="36" Padding="12,0"
@@ -28,12 +33,13 @@
                                VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
+            </WrapPanel>
         </ctl:CrudTable.ExtraActions>
 
         <ctl:CrudTable.Columns>
             <DataGridTextColumn Header="MÃ ĐP"             Binding="{Binding MaDatPhong}"     Width="0.8*" MinWidth="80"/>
-            <DataGridTextColumn Header="MÃ PHÒNG"          Binding="{Binding MaPhong}"        Width="0.9*" MinWidth="90"/>
-            <DataGridTextColumn Header="MÃ KHÁCH"          Binding="{Binding MaKhach}"        Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="PHÒNG"          Binding="{Binding TenPhong}"        Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="KHÁCH THUÊ"          Binding="{Binding TenKhach}"        Width="0.9*" MinWidth="90"/>
             <DataGridTextColumn Header="NGÀY ĐẶT"          Binding="{Binding NgayDat}"        Width="1.2*" MinWidth="120"/>
             <DataGridTextColumn Header="NGÀY DỰ KIẾN NHẬN" Binding="{Binding NgayDuKienNhan}" Width="1.5*" MinWidth="150"/>
             <DataGridTextColumn Header="TIỀN CỌC"          Binding="{Binding TienCocDisplay}" Width="1.3*" MinWidth="130"/>

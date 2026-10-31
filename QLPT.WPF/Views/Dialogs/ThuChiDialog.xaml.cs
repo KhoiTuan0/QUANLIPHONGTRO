@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using QLPT.WPF.Services;
 
@@ -32,16 +32,16 @@ public partial class ThuChiDialog : Window
 
         // Optional maHopDong
         int? maHopDong = null;
-        if (!string.IsNullOrWhiteSpace(TxtMaHopDong.Text))
+        if (!string.IsNullOrWhiteSpace(PickMaHopDong.SelectedId))
         {
-            if (!KiemTra.Ma(TxtMaHopDong.Text, out int mhd))
-            { ShowError("Mã hợp đồng phải là số nguyên dương."); return; }
+            if (!PickMaHopDong.TryGetSelectedId(out int mhd))
+            { ShowError("Vui lòng chọn hợp đồng từ danh sách đã tải."); return; }
             maHopDong = mhd;
         }
 
         try
         {
-            IsEnabled = false;
+            using var saveGuard = new DialogSaveGuard(this);
             // Khớp entity PhieuThuChi. Bảng không có cột mã hợp đồng nên ghi vào phần ghi chú.
             await ApiClient.PostAsync("/api/ThuChi", new
             {
@@ -52,10 +52,10 @@ public partial class ThuChiDialog : Window
                 ghiChu    = maHopDong.HasValue ? $"Hợp đồng #{maHopDong.Value}" : null,
                 trangThai = "Hoàn tất"
             });
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex) { ShowError(ex.Message); }
-        finally { IsEnabled = true; }
     }
 
     private void ShowError(string msg)

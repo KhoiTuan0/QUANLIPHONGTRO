@@ -21,9 +21,12 @@
                    EditLabel="Xử lý vi phạm"
                    DeleteLabel="Xóa vi phạm này"
                    SearchHint="Tìm theo phòng, khách, nội dung, trạng thái…">
+        <ctl:CrudTable.ExtraActions>
+            <Button Content="Đưa phạt vào hóa đơn" Command="{Binding DuaVaoHoaDonCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="36"/>
+        </ctl:CrudTable.ExtraActions>
         <ctl:CrudTable.Columns>
+            <DataGridTextColumn Header="HÓA ĐƠN" Binding="{Binding HoaDon}" Width="130"/>
             <DataGridTextColumn Header="MÃ VP"       Binding="{Binding MaViPham}"     Width="0.6*" MinWidth="60"/>
-            <DataGridTextColumn Header="MÃ HĐ"       Binding="{Binding MaHopDong}"    Width="0.6*" MinWidth="60"/>
             <DataGridTextColumn Header="PHÒNG"       Binding="{Binding TenPhong}"     Width="0.9*" MinWidth="90"/>
             <DataGridTextColumn Header="KHÁCH"       Binding="{Binding TenKhach}"     Width="1.2*" MinWidth="120"/>
             <DataGridTextColumn Header="NỘI DUNG"    Binding="{Binding NoiDung}"      Width="2*"   MinWidth="160"/>

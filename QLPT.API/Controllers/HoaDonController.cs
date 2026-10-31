@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLPT.API.Models;
 using QLPT.API.Services;
+using System.Data;
 
 namespace QLPT.API.Controllers
 {
@@ -22,7 +23,7 @@ namespace QLPT.API.Controllers
         {
             try
             {
-                var list = await _context.HoaDons
+                var list = await _context.HoaDons.AsNoTracking()
                     .Include(h => h.MaHopDongNavigation)
                         .ThenInclude(hd => hd.MaPhongNavigation)
                     .Include(h => h.MaHopDongNavigation)
@@ -36,6 +37,32 @@ namespace QLPT.API.Controllers
             {
                 return StatusCode(500, new { success = false, message = $"Lỗi server: {ex.Message}" });
             }
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            if (id <= 0) return BadRequest(new { message = "Mã hóa đơn không hợp lệ." });
+            var invoice = await _context.HoaDons.AsNoTracking()
+                .Include(h => h.MaHopDongNavigation).ThenInclude(h => h.MaPhongNavigation)
+                .Include(h => h.MaHopDongNavigation).ThenInclude(h => h.MaKhachDaiDienNavigation)
+                .Include(h => h.ChiTietHoaDons).FirstOrDefaultAsync(h => h.MaHoaDon == id);
+            return invoice == null ? NotFound(new { message = "Không tìm thấy hóa đơn." }) : Ok(invoice);
+        }
+
+        [HttpGet("customer/{maKhach:int}")]
+        public async Task<IActionResult> GetByCustomer(int maKhach)
+        {
+            if (maKhach <= 0) return BadRequest(new { message = "Mã khách thuê không hợp lệ." });
+            if (!await _context.KhachThues.AnyAsync(k => k.MaKhach == maKhach)) return NotFound(new { message = "Không tìm thấy khách thuê." });
+            return Ok(await _context.HoaDons.AsNoTracking().Where(h => h.MaHopDongNavigation.MaKhachDaiDien == maKhach)
+                .Include(h => h.ChiTietHoaDons)
+                .Select(h => new { h.MaHoaDon, h.MaHopDong, h.Thang, h.Nam, h.NgayLap, h.HanThanhToan,
+                    h.TongTien, h.DaThanhToan, h.ConLai, h.TrangThai,
+                    TenPhong = h.MaHopDongNavigation.MaPhongNavigation.TenPhong,
+                    HoTenKhach = h.MaHopDongNavigation.MaKhachDaiDienNavigation.HoTen,
+                    ChiTietHoaDons = h.ChiTietHoaDons.Select(c => new { c.MaViPham, c.NoiDung, c.SoLuong, c.DonGia, c.ThanhTien }) })
+                .OrderByDescending(h => h.Nam).ThenByDescending(h => h.Thang).ToListAsync());
         }
 
         // 2. Lấy hóa đơn theo Mã Hợp Đồng (Cho App Mobile của khách thuê)
@@ -72,7 +99,7 @@ namespace QLPT.API.Controllers
                 success  = true,
                 tongTien = kq.TongTien,
                 daCoHoaDon = await _context.HoaDons.AnyAsync(h => h.MaHopDong == maHopDong && h.Thang == thang && h.Nam == nam),
-                chiTiet  = kq.ChiTiet.Select(c => new { c.NoiDung, c.SoLuong, c.DonGia, c.ThanhTien })
+                chiTiet  = kq.ChiTiet.Select(c => new { c.MaViPham, c.NoiDung, c.SoLuong, c.DonGia, c.ThanhTien })
             });
         }
 
@@ -83,15 +110,16 @@ namespace QLPT.API.Controllers
             if (!dto.TryGetKy(out int thang, out int nam, out string? loiKy))
                 return BadRequest(new { success = false, message = loiKy });
 
-            var hd = await _context.HopDongs.FindAsync(dto.MaHopDong);
-            if (hd == null) return NotFound(new { success = false, message = $"Không tìm thấy hợp đồng #{dto.MaHopDong}." });
-
             try
             {
+                await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+                var hd = await _context.HopDongs.FromSqlInterpolated($"SELECT * FROM dbo.HopDong WITH (UPDLOCK, HOLDLOCK) WHERE MaHopDong = {dto.MaHopDong}").FirstOrDefaultAsync();
+                if (hd == null) return NotFound(new { success = false, message = $"Không tìm thấy hợp đồng #{dto.MaHopDong}." });
                 var (hoaDon, loi) = await HoaDonBuilder.LapAsync(_context, hd, thang, nam);
                 if (loi != null) return BadRequest(new { success = false, message = loi });
 
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
                 return Ok(new
                 {
                     success = true,
@@ -114,15 +142,22 @@ namespace QLPT.API.Controllers
             if (dto.TongTien is not > 0)
                 return BadRequest(new { success = false, message = "Tổng tiền phải lớn hơn 0." });
 
-            var hd = await _context.HopDongs.FindAsync(dto.MaHopDong);
-            if (hd == null) return NotFound(new { success = false, message = $"Không tìm thấy hợp đồng #{dto.MaHopDong}." });
-            if (hd.TrangThai != NghiepVu.HopDong.HieuLuc)
-                return BadRequest(new { success = false, message = $"Hợp đồng #{hd.MaHopDong} không còn hiệu lực." });
-            if (await _context.HoaDons.AnyAsync(h => h.MaHopDong == hd.MaHopDong && h.Thang == thang && h.Nam == nam))
-                return BadRequest(new { success = false, message = $"Hóa đơn tháng {thang}/{nam} của hợp đồng #{hd.MaHopDong} đã tồn tại." });
+            if (dto.TongTien > 9999999999999999.99m || decimal.Round(dto.TongTien.Value, 2) != dto.TongTien)
+                return BadRequest(new { success = false, message = "Tổng tiền vượt giới hạn lưu trữ hoặc có quá 2 chữ số thập phân." });
+            if (dto.GhiChu?.Trim().Length > 200)
+                return BadRequest(new { success = false, message = "Nội dung hóa đơn tối đa 200 ký tự." });
 
             try
             {
+                await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+                var hd = await _context.HopDongs.FromSqlInterpolated($"SELECT * FROM dbo.HopDong WITH (UPDLOCK, HOLDLOCK) WHERE MaHopDong = {dto.MaHopDong}").FirstOrDefaultAsync();
+                if (hd == null) return NotFound(new { success = false, message = $"Không tìm thấy hợp đồng #{dto.MaHopDong}." });
+                if (hd.TrangThai != NghiepVu.HopDong.HieuLuc)
+                    return BadRequest(new { success = false, message = $"Hợp đồng #{hd.MaHopDong} không còn hiệu lực." });
+                string? loiThoiHan = HoaDonBuilder.KiemTraKy(hd, thang, nam);
+                if (loiThoiHan != null) return BadRequest(new { success = false, message = loiThoiHan });
+                if (await _context.HoaDons.AnyAsync(h => h.MaHopDong == hd.MaHopDong && h.Thang == thang && h.Nam == nam))
+                    return BadRequest(new { success = false, message = $"Hóa đơn tháng {thang}/{nam} của hợp đồng #{hd.MaHopDong} đã tồn tại." });
                 string noiDung = string.IsNullOrWhiteSpace(dto.GhiChu)
                     ? $"Tiền phòng và dịch vụ tháng {thang}/{nam}"
                     : dto.GhiChu.Trim();
@@ -131,6 +166,7 @@ namespace QLPT.API.Controllers
                     new ChiTietHoaDon { NoiDung = noiDung, SoLuong = 1, DonGia = dto.TongTien, ThanhTien = dto.TongTien }
                 });
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
                 return Ok(new { success = true, message = "Đã lập hóa đơn.", data = HoaDonBuilder.ToDto(hoaDon) });
             }
             catch (Exception ex)
@@ -144,7 +180,15 @@ namespace QLPT.API.Controllers
         [HttpPut("{id}/thu-tien")]
         public async Task<IActionResult> ThuTien(int id, [FromBody] ThuTienDto dto)
         {
-            var hoaDon = await _context.HoaDons
+            if (id <= 0 || dto.SoTienThu <= 0 || dto.SoTienThu > 9999999999999999.99m
+                || decimal.Round(dto.SoTienThu, 2) != dto.SoTienThu)
+                return BadRequest(new { success = false, message = "Mã hóa đơn và số tiền thu phải hợp lệ; số tiền dương, tối đa 2 chữ số thập phân." });
+            if (dto.PhuongThuc?.Trim().Length > 50 || dto.GhiChu?.Trim().Length > 300)
+                return BadRequest(new { success = false, message = "Phương thức tối đa 50 ký tự; ghi chú tối đa 300 ký tự." });
+            try
+            {
+            await using var tx = await _context.Database.BeginTransactionAsync();
+            var hoaDon = await _context.HoaDons.AsNoTracking()
                 .Include(h => h.MaHopDongNavigation).ThenInclude(hd => hd.MaPhongNavigation)
                 .Include(h => h.MaHopDongNavigation).ThenInclude(hd => hd.MaKhachDaiDienNavigation)
                 .FirstOrDefaultAsync(h => h.MaHoaDon == id);
@@ -161,9 +205,18 @@ namespace QLPT.API.Controllers
             if (dto.SoTienThu > conLai)
                 return BadRequest(new { success = false, message = $"Số tiền thu vượt quá số còn lại ({NghiepVu.Tien(conLai)})." });
 
-            await using var tx = await _context.Database.BeginTransactionAsync();
-            try
-            {
+                // Compare and update the current SQL balance atomically. A competing
+                // collection cannot reuse the amount read before this transaction.
+                int updated = await _context.HoaDons.Where(h => h.MaHoaDon == id
+                    && h.TrangThai != NghiepVu.HoaDon.DaThanhToan
+                    && (h.ConLai ?? ((h.TongTien ?? 0) - (h.DaThanhToan ?? 0))) >= dto.SoTienThu)
+                    .ExecuteUpdateAsync(update => update
+                        .SetProperty(h => h.DaThanhToan, h => (h.DaThanhToan ?? 0) + dto.SoTienThu)
+                        .SetProperty(h => h.ConLai, h => (h.ConLai ?? ((h.TongTien ?? 0) - (h.DaThanhToan ?? 0))) - dto.SoTienThu)
+                        .SetProperty(h => h.TrangThai, h => (h.ConLai ?? ((h.TongTien ?? 0) - (h.DaThanhToan ?? 0))) - dto.SoTienThu <= 0
+                            ? NghiepVu.HoaDon.DaThanhToan : NghiepVu.HoaDon.MotPhan));
+                if (updated == 0)
+                    return Conflict(new { success = false, message = "Công nợ vừa được cập nhật bởi giao dịch khác. Tải lại hóa đơn và kiểm tra số tiền còn lại." });
                 _context.ThanhToans.Add(new ThanhToan
                 {
                     MaHoaDon      = hoaDon.MaHoaDon,
@@ -173,9 +226,8 @@ namespace QLPT.API.Controllers
                     GhiChu        = dto.GhiChu
                 });
 
-                hoaDon.DaThanhToan = daThu + dto.SoTienThu;
-                hoaDon.ConLai      = conLai - dto.SoTienThu;
-                hoaDon.TrangThai   = hoaDon.ConLai <= 0 ? NghiepVu.HoaDon.DaThanhToan : NghiepVu.HoaDon.MotPhan;
+                var current = await _context.HoaDons.AsNoTracking().Where(h => h.MaHoaDon == id)
+                    .Select(h => new { h.DaThanhToan, h.ConLai, h.TrangThai }).SingleAsync();
 
                 var hopDong = hoaDon.MaHopDongNavigation;
                 NghiepVu.GhiPhieu(_context, NghiepVu.PhieuThu,
@@ -187,15 +239,14 @@ namespace QLPT.API.Controllers
                 return Ok(new
                 {
                     success = true,
-                    message = hoaDon.ConLai <= 0
+                    message = current.ConLai <= 0
                         ? "Đã thu đủ, hóa đơn chuyển sang 'Đã thanh toán'."
-                        : $"Đã thu {NghiepVu.Tien(dto.SoTienThu)}, còn lại {NghiepVu.Tien(hoaDon.ConLai)}.",
-                    data = new { hoaDon.MaHoaDon, hoaDon.DaThanhToan, hoaDon.ConLai, hoaDon.TrangThai }
+                        : $"Đã thu {NghiepVu.Tien(dto.SoTienThu)}, còn lại {NghiepVu.Tien(current.ConLai)}.",
+                    data = new { hoaDon.MaHoaDon, current.DaThanhToan, current.ConLai, current.TrangThai }
                 });
             }
             catch (Exception ex)
             {
-                await tx.RollbackAsync();
                 return StatusCode(500, new { success = false, message = $"Lỗi server: {ex.InnerException?.Message ?? ex.Message}" });
             }
         }
@@ -213,14 +264,16 @@ namespace QLPT.API.Controllers
             if (model.ChiSoNuocMoi < model.ChiSoNuocCu)
                 return BadRequest(new { success = false, message = "Chỉ số nước mới không được nhỏ hơn chỉ số cũ." });
 
-            var hopDong = await _context.HopDongs
-                .FirstOrDefaultAsync(h => h.MaPhong == model.MaPhong && h.TrangThai == NghiepVu.HopDong.HieuLuc);
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+            var hopDong = await _context.HopDongs.FromSqlInterpolated($"SELECT * FROM dbo.HopDong WITH (UPDLOCK, HOLDLOCK) WHERE MaPhong = {model.MaPhong}")
+                .FirstOrDefaultAsync(h => h.TrangThai == NghiepVu.HopDong.HieuLuc);
             if (hopDong == null)
                 return BadRequest(new { success = false, message = $"Phòng {model.MaPhong} hiện không có hợp đồng đang hiệu lực." });
+            string? loiKy = HoaDonBuilder.KiemTraKy(hopDong, model.Thang, model.Nam);
+            if (loiKy != null) return BadRequest(new { success = false, message = loiKy });
             if (await _context.HoaDons.AnyAsync(h => h.MaHopDong == hopDong.MaHopDong && h.Thang == model.Thang && h.Nam == model.Nam))
                 return BadRequest(new { success = false, message = $"Hóa đơn tháng {model.Thang}/{model.Nam} của phòng này đã tồn tại rồi!" });
 
-            await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 var today = DateOnly.FromDateTime(DateTime.Now);
@@ -248,7 +301,7 @@ namespace QLPT.API.Controllers
                     message = "Lập hóa đơn, lưu chỉ số điện nước thành công!",
                     maHoaDon = hoaDon!.MaHoaDon,
                     tongTien = hoaDon.TongTien,
-                    chiTiet = hoaDon.ChiTietHoaDons.Select(c => new { c.NoiDung, c.SoLuong, c.DonGia, c.ThanhTien })
+                    chiTiet = hoaDon.ChiTietHoaDons.Select(c => new { c.MaViPham, c.NoiDung, c.SoLuong, c.DonGia, c.ThanhTien })
                 });
             }
             catch (Exception ex)
@@ -319,7 +372,7 @@ namespace QLPT.API.Controllers
                 (nam, thang) = a > 12 ? (a, b) : (b, a);
             }
             if (MaHopDong <= 0) { loi = "Thiếu mã hợp đồng."; return false; }
-            if (thang is < 1 or > 12 || nam < 2000) { loi = "Kỳ hóa đơn không hợp lệ."; return false; }
+            if (thang is < 1 or > 12 || nam is < 2000 or > 9999) { loi = "Kỳ hóa đơn không hợp lệ."; return false; }
             return true;
         }
     }

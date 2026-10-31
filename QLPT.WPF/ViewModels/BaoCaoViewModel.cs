@@ -40,6 +40,15 @@ public partial class BaoCaoViewModel : BaseViewModel
     [ObservableProperty] private Axis[] _doanhThuY = Array.Empty<Axis>();
     [ObservableProperty] private ObservableCollection<DongDoanhThu> _doanhThuTheoKy = new();
     [ObservableProperty] private bool _coDoanhThu;
+    public List<string> KhoangOptions { get; } = new() { "3 tháng", "6 tháng", "12 tháng", "Tùy chọn" };
+    public List<string> HetHanOptions { get; } = new() { "7 ngày", "30 ngày", "60 ngày", "90 ngày", "Tùy chọn" };
+    [ObservableProperty] private string _khoangThoiGian = "12 tháng";
+    [ObservableProperty] private DateTime? _ngayTu = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-11);
+    [ObservableProperty] private DateTime? _ngayDen = DateTime.Today;
+    [ObservableProperty] private int _soNgaySapHetHan = 30;
+    [ObservableProperty] private string _mocHetHan = "30 ngày";
+    [ObservableProperty] private string _soNgayTuyChon = "30";
+    public bool HienSoNgayTuyChon => MocHetHan == "Tùy chọn";
 
     // Công nợ theo phòng: thanh ngang, nợ nhiều nhất ở trên cùng
     [ObservableProperty] private ISeries[] _congNoSeries = Array.Empty<ISeries>();
@@ -53,11 +62,65 @@ public partial class BaoCaoViewModel : BaseViewModel
     // Số liệu thô của tab Tổng quan, để xuất Excel ra dạng số thay vì chuỗi đã định dạng.
     private readonly List<(string ChiTieu, decimal GiaTri, string DonVi)> _tongQuan = new();
     private List<KyDoanhThu> _ky = new();
+    private JsonElement _hoaDonRaw;
     private bool _daTai;
 
     private const int SoPhongHienThi = 8;
 
     public BaoCaoViewModel() => _ = LoadAsync();
+
+    partial void OnKhoangThoiGianChanged(string value)
+    {
+        int soThang = value switch { "3 tháng" => 3, "6 tháng" => 6, "12 tháng" => 12, _ => 0 };
+        if (soThang > 0)
+        {
+            NgayTu = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(1 - soThang);
+            NgayDen = DateTime.Today;
+        }
+        CapNhatKy();
+    }
+    partial void OnNgayTuChanged(DateTime? value) { if (KhoangThoiGian == "Tùy chọn") CapNhatKy(); }
+    partial void OnNgayDenChanged(DateTime? value) { if (KhoangThoiGian == "Tùy chọn") CapNhatKy(); }
+    partial void OnMocHetHanChanged(string value)
+    {
+        OnPropertyChanged(nameof(HienSoNgayTuyChon));
+        if (value == "Tùy chọn") ApDungSoNgayTuyChon();
+        else if (int.TryParse(value.Split(' ')[0], out int days)) SoNgaySapHetHan = days;
+    }
+    partial void OnSoNgayTuyChonChanged(string value)
+    {
+        if (HienSoNgayTuyChon) ApDungSoNgayTuyChon();
+    }
+    private void ApDungSoNgayTuyChon()
+    {
+        if (!int.TryParse(SoNgayTuyChon, out int days) || days is < 1 or > 365)
+        {
+            ErrorMessage = "Số ngày sắp hết hạn tùy chọn phải từ 1 đến 365.";
+            return;
+        }
+        ErrorMessage = "";
+        SoNgaySapHetHan = days;
+    }
+    partial void OnSoNgaySapHetHanChanged(int value) { if (value > 0) _ = LoadAsync(); }
+
+    private void CapNhatKy()
+    {
+        if (_hoaDonRaw.ValueKind != JsonValueKind.Array || NgayTu == null || NgayDen == null) return;
+        if (NgayTu > NgayDen || NgayDen.Value.Year * 12 + NgayDen.Value.Month
+            - NgayTu.Value.Year * 12 - NgayTu.Value.Month >= 120)
+        {
+            ErrorMessage = "Khoảng thống kê phải từ ngày bắt đầu đến ngày kết thúc và tối đa 120 tháng.";
+            return;
+        }
+        ErrorMessage = "";
+        _ky = ThongKe.TheoKhoang(_hoaDonRaw, NgayTu.Value, NgayDen.Value);
+        DoanhThuTheoKy = new ObservableCollection<DongDoanhThu>(_ky.AsEnumerable().Reverse().Select(k => new DongDoanhThu
+        {
+            Ky = k.Nhan, Tong = VnMoney.FormatD(k.Tong), DaThu = VnMoney.FormatD(k.DaThu),
+            ConNo = VnMoney.FormatD(k.ConNo), TyLe = k.Tong == 0 ? "—" : k.TyLeThu.ToString("P0"), Goc = k
+        }));
+        DungBieuDo();
+    }
 
     private static decimal Dec(string s) =>
         decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var d) ? d : 0;
@@ -87,14 +150,14 @@ public partial class BaoCaoViewModel : BaseViewModel
         _tongQuan.Add(("Khách đang ở",             Dec(G("khachDangO")),    "người"));
         _tongQuan.Add(("Hồ sơ khách thuê (kể cả khách cũ)", Dec(G("tongKhach")), "hồ sơ"));
         _tongQuan.Add(("Hợp đồng đang hiệu lực",   Dec(G("hdHieuLuc")),     "hợp đồng"));
-        _tongQuan.Add(("Hợp đồng sắp hết hạn (30 ngày)", Dec(G("sapHetHan")), "hợp đồng"));
+        _tongQuan.Add(("Hợp đồng sắp/quá hạn (30 ngày)", Dec(G("sapHetHan")), "hợp đồng"));
         _tongQuan.Add(("Công nợ chưa thu",         Dec(G("noChuaThu")),     "đồng"));
         _tongQuan.Add(($"Doanh thu tháng {DateTime.Now:MM/yyyy}", Dec(G("doanhThuThang")), "đồng"));
 
         // --- Tab 2: expiring contracts ---
         // API trả trường phẳng tenPhong / hoTenKhach (không có object navigation lồng),
         // bản cũ đọc kiểu lồng nên cột Khách thuê luôn trống và Phòng hiện số mã.
-        var sap = await ApiClient.GetRawAsync("/api/HopDong/sap-het-han?days=30");
+        var sap = await ApiClient.GetRawAsync($"/api/HopDong/sap-het-han?days={SoNgaySapHetHan}");
         var hdList = new List<HopDongSapHetHanBc>();
         if (sap.ValueKind == JsonValueKind.Array)
             foreach (var h in sap.EnumerateArray())
@@ -115,6 +178,9 @@ public partial class BaoCaoViewModel : BaseViewModel
                 });
             }
         HopDongSapHetHan = new ObservableCollection<HopDongSapHetHanBc>(hdList.OrderBy(x => x.KetThuc));
+        SapHetHan = hdList.Count.ToString();
+        int mucHetHan = _tongQuan.FindIndex(x => x.ChiTieu.StartsWith("Hợp đồng sắp/quá hạn"));
+        if (mucHetHan >= 0) _tongQuan[mucHetHan] = ($"Hợp đồng sắp/quá hạn ({SoNgaySapHetHan} ngày)", hdList.Count, "hợp đồng");
 
         // --- Tab 3: unpaid invoices ---
         var hd = await ApiClient.GetRawAsync("/api/HoaDon");
@@ -161,16 +227,8 @@ public partial class BaoCaoViewModel : BaseViewModel
         HoaDonChuaThu = new ObservableCollection<HoaDonChuaThu>(unpaidList.OrderBy(x => x.Han));
 
         // --- Doanh thu theo kỳ (12 kỳ gần nhất) ---
-        _ky = ThongKe.TheoKy(hd, soKy: 12);
-        DoanhThuTheoKy = new ObservableCollection<DongDoanhThu>(_ky.AsEnumerable().Reverse().Select(k => new DongDoanhThu
-        {
-            Ky     = k.Nhan,
-            Tong   = VnMoney.FormatD(k.Tong),
-            DaThu  = VnMoney.FormatD(k.DaThu),
-            ConNo  = VnMoney.FormatD(k.ConNo),
-            TyLe   = k.Tong == 0 ? "—" : k.TyLeThu.ToString("P0"),
-            Goc    = k,
-        }));
+        _hoaDonRaw = hd;
+        CapNhatKy();
 
         DungBieuDo();
         _daTai = true;
@@ -182,7 +240,7 @@ public partial class BaoCaoViewModel : BaseViewModel
         TooltipNen = ChartTheme.NenTooltip;
         TooltipChu = ChartTheme.ChuChinh;
 
-        CoDoanhThu = _ky.Count > 0;
+        CoDoanhThu = _ky.Any(k => k.Tong > 0);
         DoanhThuSeries = ThongKe.SeriesDoanhThu(_ky);
         DoanhThuX = ChartTheme.TrucDanhMuc(_ky.Select(k => k.Nhan).ToArray());
         DoanhThuY = ChartTheme.TrucTien();
@@ -258,7 +316,7 @@ public partial class BaoCaoViewModel : BaseViewModel
         });
 
         if (ok && ConfirmDialog.Ask("Đã xuất báo cáo",
-                "Báo cáo gồm 4 sheet: Tổng quan, Hợp đồng sắp hết hạn, Hóa đơn chưa thu, Doanh thu theo kỳ.",
+                "Báo cáo gồm 4 sheet: Tổng quan, Hợp đồng sắp/quá hạn, Hóa đơn chưa thu, Doanh thu theo kỳ.",
                 Path.GetFileName(path), "Mở file"))
         {
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true }); }
@@ -287,8 +345,8 @@ public partial class BaoCaoViewModel : BaseViewModel
             },
             new()
             {
-                TenSheet = "HĐ sắp hết hạn",
-                TieuDe   = "Hợp đồng hết hạn trong 30 ngày",
+                TenSheet = "HĐ sắp hoặc quá hạn",
+                TieuDe   = $"Hợp đồng quá hạn hoặc hết hạn trong {SoNgaySapHetHan} ngày",
                 Cot      = new ExcelExporter.Cot[]
                 {
                     new("Mã HĐ", S), new("Phòng", K), new("Khách thuê", K),
@@ -321,7 +379,7 @@ public partial class BaoCaoViewModel : BaseViewModel
             new()
             {
                 TenSheet = "Doanh thu theo kỳ",
-                TieuDe   = "Doanh thu theo kỳ (12 kỳ gần nhất)",
+                TieuDe   = $"Doanh thu theo kỳ ({NgayTu:MM/yyyy} - {NgayDen:MM/yyyy})",
                 DongTong = true,
                 Cot      = new ExcelExporter.Cot[]
                 {

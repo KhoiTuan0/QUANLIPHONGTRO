@@ -52,21 +52,4 @@ public partial class LoginWindow : Window
         LoadingBar.Visibility = Visibility.Collapsed;
     }
 
-    private void BtnRegister_Click(object sender, RoutedEventArgs e)
-    {
-        try { ApiClient.SetBaseUrl(TxtApiUrl.Text.Trim()); }
-        catch (Exception ex) { TxtStatus.Text = ex.Message; TxtStatus.Foreground = Brushes.Crimson; return; }
-        var win = new RegisterWindow();
-        win.Owner = this;
-        win.ShowDialog();
-        // Điền sẵn tên vừa đăng ký, chỉ còn gõ mật khẩu → tránh gõ sai tên.
-        if (!string.IsNullOrEmpty(win.TenDaDangKy))
-        {
-            TxtUsername.Text = win.TenDaDangKy;
-            PbPassword.Clear();
-            PbPassword.Focus();
-            TxtStatus.Text = "Đăng ký thành công. Nhập mật khẩu để đăng nhập.";
-            TxtStatus.Foreground = Brushes.Gray;
-        }
-    }
 }

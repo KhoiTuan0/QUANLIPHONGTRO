@@ -6,6 +6,7 @@ namespace QLPT.API.Models;
 public partial class ChiTietHoaDon
 {
     public int MaChiTiet { get; set; }
+    public int? MaViPham { get; set; }
 
     public int MaHoaDon { get; set; }
 

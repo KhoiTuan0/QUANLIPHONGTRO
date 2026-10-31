@@ -17,6 +17,9 @@ public partial class CoSoDialog : Window
             TxtTitle.Text = "Sửa cơ sở";
             TxtTen.Text = item.TenCoSo;
             TxtDiaChi.Text = item.DiaChi;
+            TxtDiaChi.IsReadOnly = !item.CoTheSuaDiaChi;
+            if (!item.CoTheSuaDiaChi)
+                TxtDiaChi.ToolTip = "Cơ sở có hợp đồng hiệu lực nên địa chỉ được giữ cố định.";
             TxtSdt.Text = item.SoDienThoai;
             TxtMoTa.Text = item.MoTa;
         }
@@ -32,7 +35,12 @@ public partial class CoSoDialog : Window
             return;
         }
         var sdt = TxtSdt.Text.Trim();
-        if (sdt.Length > 0 && !KiemTra.Sdt(sdt))
+        if (string.IsNullOrWhiteSpace(TxtDiaChi.Text))
+        {
+            TxtError.Text = "Địa chỉ cơ sở không được để trống.";
+            return;
+        }
+        if (!KiemTra.Sdt(sdt))
         {
             TxtError.Text = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.";
             return;
@@ -41,6 +49,7 @@ public partial class CoSoDialog : Window
         BtnSave.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             var body = new
             {
                 tenCoSo = ten,
@@ -54,6 +63,7 @@ public partial class CoSoDialog : Window
             else
                 await ApiClient.PutAsync($"/api/CoSo/{_item.MaCoSo}", body);
 
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)

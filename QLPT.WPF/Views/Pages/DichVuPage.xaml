@@ -7,14 +7,14 @@
         <vm:DichVuViewModel/>
     </UserControl.DataContext>
 
-    <!-- Dịch vụ chỉ cho thêm / xóa, không sửa trực tiếp -->
     <ctl:CrudTable Margin="20,16,20,20"
                    ItemsSource="{Binding Items}"
                    SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                    ReloadCommand="{Binding LoadCommand}"
                    AddCommand="{Binding AddCommand}"
+                   EditCommand="{Binding EditCommand}"
                    DeleteCommand="{Binding DeleteCommand}"
-                   ShowEdit="False"
+                   ShowEdit="True"
                    IsBusy="{Binding IsBusy}"
                    ErrorMessage="{Binding ErrorMessage}"
                    AddLabel="Thêm dịch vụ"

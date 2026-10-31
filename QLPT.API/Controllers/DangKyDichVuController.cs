@@ -38,10 +38,22 @@ public class DangKyDichVuController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] DangKyDichVu model)
     {
+        if (model.MaHopDong <= 0 || model.MaDichVu <= 0)
+            return BadRequest(new { success = false, message = "Chọn hợp đồng và dịch vụ trong danh sách." });
+        if (model.DonGiaApDung.HasValue && (model.DonGiaApDung < 0 || model.DonGiaApDung > 9999999999999999.99m
+            || decimal.Round(model.DonGiaApDung.Value, 2) != model.DonGiaApDung))
+            return BadRequest(new { success = false, message = "Đơn giá dịch vụ phải không âm, tối đa 2 chữ số thập phân và trong giới hạn lưu trữ." });
+        if (model.NgayBatDau == default(DateOnly))
+            return BadRequest(new { success = false, message = "Ngày bắt đầu dịch vụ không hợp lệ." });
         var hd = await _ctx.HopDongs.FindAsync(model.MaHopDong);
         if (hd == null) return NotFound(new { success = false, message = $"Không tìm thấy hợp đồng #{model.MaHopDong}." });
         if (hd.TrangThai != NghiepVu.HopDong.HieuLuc)
             return BadRequest(new { success = false, message = "Chỉ đăng ký dịch vụ cho hợp đồng đang hiệu lực." });
+        var ngayBatDau = model.NgayBatDau ?? DateOnly.FromDateTime(DateTime.Today);
+        if (ngayBatDau < DateOnly.FromDateTime(DateTime.Today))
+            return BadRequest(new { success = false, message = "Dịch vụ mới không được bắt đầu trước hôm nay." });
+        if (ngayBatDau < hd.NgayBatDau || ngayBatDau > hd.NgayKetThuc)
+            return BadRequest(new { success = false, message = "Ngày bắt đầu dịch vụ phải nằm trong thời gian hợp đồng." });
         var dv = await _ctx.DichVus.FindAsync(model.MaDichVu);
         if (dv == null) return NotFound(new { success = false, message = $"Không tìm thấy dịch vụ #{model.MaDichVu}." });
         if (await _ctx.DangKyDichVus.AnyAsync(d => d.MaHopDong == model.MaHopDong && d.MaDichVu == model.MaDichVu
@@ -50,11 +62,14 @@ public class DangKyDichVuController : ControllerBase
 
         try
         {
-            model.MaDangKy       = 0;
-            model.TrangThai      = NghiepVu.DichVu.DangSuDung;
-            model.NgayBatDau   ??= DateOnly.FromDateTime(DateTime.Now);
-            model.DonGiaApDung ??= dv.DonGia;
-            model.NgayKetThuc    = null;
+            decimal? gia = model.DonGiaApDung ?? dv.DonGia;
+            if (gia is < 0 || gia is > 9999999999999999.99m)
+                return BadRequest(new { success = false, message = "Đơn giá trong danh mục dịch vụ chưa hợp lệ." });
+            model = new DangKyDichVu
+            {
+                MaHopDong = model.MaHopDong, MaDichVu = model.MaDichVu,
+                TrangThai = NghiepVu.DichVu.DangSuDung, NgayBatDau = ngayBatDau, DonGiaApDung = gia
+            };
             _ctx.DangKyDichVus.Add(model);
             await _ctx.SaveChangesAsync();
             return Ok(new { success = true, message = "Đăng ký dịch vụ thành công", data = new { model.MaDangKy } });
@@ -69,9 +84,13 @@ public class DangKyDichVuController : ControllerBase
         {
             var item = await _ctx.DangKyDichVus.FindAsync(id);
             if (item == null) return NotFound(new { message = "Không tìm thấy đăng ký" });
+            if (item.TrangThai == NghiepVu.DichVu.DaKetThuc)
+                return Ok(new { success = true, message = "Dịch vụ đã kết thúc, giữ nguyên ngày ngừng trước đó." });
+            if (item.NgayBatDau > DateOnly.FromDateTime(DateTime.Today))
+                return BadRequest(new { success = false, message = "Dịch vụ chưa bắt đầu. Dùng xóa đăng ký để hủy dịch vụ đặt trước." });
             // CSDL dùng "Đã kết thúc"; ghi "Ngưng" sẽ tạo ra trạng thái lạc loài
             // và hóa đơn sẽ vẫn tính dịch vụ này vì bộ lọc chỉ nhận "Đang sử dụng".
-            item.TrangThai = "Đã kết thúc";
+            item.TrangThai = NghiepVu.DichVu.DaKetThuc;
             item.NgayKetThuc = DateOnly.FromDateTime(DateTime.Today);
             await _ctx.SaveChangesAsync();
             return Ok(new { success = true, message = "Đã ngưng dịch vụ" });
@@ -86,6 +105,8 @@ public class DangKyDichVuController : ControllerBase
         {
             var item = await _ctx.DangKyDichVus.FindAsync(id);
             if (item == null) return NotFound(new { message = "Không tìm thấy đăng ký" });
+            if (!item.NgayBatDau.HasValue || item.NgayBatDau <= DateOnly.FromDateTime(DateTime.Today))
+                return BadRequest(new { success = false, message = "Không xóa lịch sử dịch vụ đã sử dụng. Dùng ngừng dịch vụ để giữ dữ liệu tính hóa đơn." });
             _ctx.DangKyDichVus.Remove(item);
             await _ctx.SaveChangesAsync();
             return Ok(new { success = true, message = "Xóa thành công" });

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLPT.API.Models;
+using QLPT.API.Services;
 
 namespace QLPT.API.Controllers;
 
@@ -16,10 +17,12 @@ public class ThuChiController : ControllerBase
     {
         try
         {
-            var list = await _ctx.PhieuThuChis
+            var list = await _ctx.PhieuThuChis.AsNoTracking()
                 .OrderByDescending(x => x.NgayLap)
                 .ToListAsync();
-            return Ok(list);
+            return Ok(list.Select(x => new { x.MaPhieu, x.LoaiPhieu, x.NgayLap, x.NoiDung,
+                x.SoTien, x.GhiChu, x.NguoiNopNhan, x.TrangThai,
+                CoTheSuaXoa = !NghiepVu.LaPhieuTuDong(x) }).ToList());
         }
         catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
     }
@@ -31,6 +34,9 @@ public class ThuChiController : ControllerBase
             return BadRequest(new { success = false, message = "Loại phiếu phải là 'Thu' hoặc 'Chi'." });
         if (model.SoTien is not > 0)
             return BadRequest(new { success = false, message = "Số tiền phải lớn hơn 0." });
+        if (model.GhiChu?.StartsWith("[QLPT:auto]", StringComparison.Ordinal) == true ||
+            NghiepVu.LaPhieuTuDong(model))
+            return BadRequest(new { message = "Phiếu nhập thủ công không được dùng dấu nguồn của nghiệp vụ tự động." });
         try
         {
             model.MaPhieu     = 0;
@@ -50,6 +56,12 @@ public class ThuChiController : ControllerBase
         {
             var item = await _ctx.PhieuThuChis.FindAsync(id);
             if (item == null) return NotFound(new { message = "Không tìm thấy phiếu" });
+            if (NghiepVu.LaPhieuTuDong(item))
+                return BadRequest(new { message = "Phiếu do nghiệp vụ tạo không được sửa trực tiếp; hãy xử lý tại nghiệp vụ gốc." });
+            if (model.LoaiPhieu is not (null or "Thu" or "Chi") || model.SoTien is <= 0 ||
+                model.GhiChu?.StartsWith("[QLPT:auto]", StringComparison.Ordinal) == true ||
+                NghiepVu.LaPhieuTuDong(model))
+                return BadRequest(new { message = "Loại, số tiền hoặc nội dung phiếu không hợp lệ." });
             item.LoaiPhieu    = model.LoaiPhieu    ?? item.LoaiPhieu;
             item.NoiDung      = model.NoiDung      ?? item.NoiDung;
             item.SoTien       = model.SoTien       ?? item.SoTien;
@@ -70,6 +82,8 @@ public class ThuChiController : ControllerBase
         {
             var item = await _ctx.PhieuThuChis.FindAsync(id);
             if (item == null) return NotFound(new { message = "Không tìm thấy phiếu" });
+            if (NghiepVu.LaPhieuTuDong(item))
+                return BadRequest(new { message = "Phiếu do nghiệp vụ tạo không được xóa trực tiếp; hãy xử lý tại nghiệp vụ gốc." });
             _ctx.PhieuThuChis.Remove(item);
             await _ctx.SaveChangesAsync();
             return Ok(new { success = true, message = "Xóa phiếu thành công" });

@@ -15,8 +15,6 @@ public partial class PhongDialog : Window
         _item = item;
 
         // Default values
-        TxtMaLoaiPhong.Text = "1";
-        TxtMaCoSo.Text = "1";
         TxtTang.Text = "1";
         CboTrangThai.SelectedIndex = 0; // Trống
 
@@ -24,11 +22,22 @@ public partial class PhongDialog : Window
         {
             TxtTitle.Text = "Sửa phòng";
             TxtTenPhong.Text = item.TenPhong;
-            TxtMaLoaiPhong.Text = item.MaLoaiPhong.ToString();
+            PickMaLoaiPhong.SelectedId = item.MaLoaiPhong.ToString();
             TxtGiaThue.Text = item.GiaThue > 0 ? item.GiaThue.ToString() : "";
-            TxtMaCoSo.Text = item.MaCoSo.ToString();
+            PickMaCoSo.SelectedId = item.MaCoSo.ToString();
             TxtTang.Text = item.Tang.ToString();
             TxtMoTa.Text = item.MoTa;
+            if (item.CoLichSu)
+            {
+                TxtHistoryNotice.Visibility = Visibility.Visible;
+                TxtTenPhong.IsReadOnly = true;
+                TxtTang.IsReadOnly = true;
+                PickMaCoSo.ReadOnly = true;
+                PickMaLoaiPhong.ReadOnly = true;
+                TxtTenPhong.ToolTip = TxtTang.ToolTip =
+                    "Phòng đã có hợp đồng hoặc phiếu đặt; không thể đổi tên, tầng, loại phòng hay cơ sở vì sẽ làm sai lịch sử.";
+                PickMaLoaiPhong.ToolTip = PickMaCoSo.ToolTip = TxtTenPhong.ToolTip;
+            }
 
             // Set combobox
             foreach (ComboBoxItem ci in CboTrangThai.Items)
@@ -53,14 +62,14 @@ public partial class PhongDialog : Window
         }
 
         // Trước đây nhập sai bị lặng lẽ thay bằng 1 → phòng gắn nhầm loại / cơ sở.
-        if (!KiemTra.Ma(TxtMaLoaiPhong.Text, out var maLoai))
+        if (!PickMaLoaiPhong.TryGetSelectedId(out var maLoai))
         {
-            TxtError.Text = "Mã loại phòng phải là số nguyên dương (xem ở trang Loại phòng).";
+            TxtError.Text = "Vui lòng chọn loại phòng từ danh sách đã tải.";
             return;
         }
-        if (!KiemTra.Ma(TxtMaCoSo.Text, out var maCoSo))
+        if (!PickMaCoSo.TryGetSelectedId(out var maCoSo))
         {
-            TxtError.Text = "Mã cơ sở phải là số nguyên dương (xem ở trang Cơ sở).";
+            TxtError.Text = "Vui lòng chọn cơ sở từ danh sách đã tải.";
             return;
         }
         if (!KiemTra.SoNguyen(TxtTang.Text, 0, 100, out var tang))
@@ -69,10 +78,9 @@ public partial class PhongDialog : Window
             return;
         }
 
-        decimal giaThue = 0;
-        if (!string.IsNullOrWhiteSpace(TxtGiaThue.Text) && !VnMoney.TryParse(TxtGiaThue.Text, out giaThue))
+        if (!VnMoney.TryParse(TxtGiaThue.Text, out var giaThue) || giaThue < 100_000)
         {
-            TxtError.Text = "Giá thuê không hợp lệ.";
+            TxtError.Text = "Giá thuê phải từ 100.000 đ trở lên.";
             return;
         }
 
@@ -81,6 +89,7 @@ public partial class PhongDialog : Window
         BtnSave.IsEnabled = false;
         try
         {
+            using var saveGuard = new DialogSaveGuard(this);
             var body = new
             {
                 tenPhong = ten,
@@ -97,6 +106,7 @@ public partial class PhongDialog : Window
             else
                 await ApiClient.PutAsync($"/api/Phong/{_item.MaPhong}", body);
 
+            saveGuard.Complete();
             DialogResult = true;
         }
         catch (Exception ex)

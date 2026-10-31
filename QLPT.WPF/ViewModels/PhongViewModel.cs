@@ -39,11 +39,14 @@ public partial class PhongViewModel : BaseViewModel
                 MaPhong = ApiClient.ElStr(el, "maPhong"),
                 TenPhong = ApiClient.ElStr(el, "tenPhong"),
                 MaLoaiPhong = maLoai,
+                TenLoaiPhong = LookupData.Display(ApiClient.ElStr(el, "tenLoaiPhong"), maLoai.ToString()),
                 GiaThue = gia,
                 GiaThueDisplay = VnMoney.FormatD(gia),
                 TrangThai = ApiClient.ElStr(el, "trangThai"),
                 MaCoSo = maCoSo,
+                TenCoSo = LookupData.Display(ApiClient.ElStr(el, "tenCoSo"), maCoSo.ToString()),
                 Tang = tang,
+                CoLichSu = bool.TryParse(ApiClient.ElStr(el, "coLichSu"), out var coLichSu) && coLichSu,
                 MoTa = ApiClient.ElStr(el, "moTa")
             });
         }
@@ -86,10 +89,13 @@ public class PhongItem
     public string MaPhong { get; set; } = "";
     public string TenPhong { get; set; } = "";
     public int MaLoaiPhong { get; set; }
+    public string TenLoaiPhong { get; set; } = "";
     public decimal GiaThue { get; set; }
     public string GiaThueDisplay { get; set; } = "";
     public string TrangThai { get; set; } = "";
     public int MaCoSo { get; set; }
+    public string TenCoSo { get; set; } = "";
     public int Tang { get; set; }
+    public bool CoLichSu { get; set; }
     public string MoTa { get; set; } = "";
 }
