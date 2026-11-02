@@ -56,6 +56,17 @@ public static class ApiAccessChecks
         foreach (string action in new[] { "Login", "Logout" })
             await Verify("Auth", action, "POST", anonymous);
         await Verify("Auth", "Register", "POST", anonymous, 401);
+        await Verify("Auth", "Register", "POST", customer, 403);
+        await Verify("Auth", "ChangePassword", "POST", customer);
+        await Verify("GiaHanHopDong", "GetAll", "GET", customer);
+        await Verify("GiaHanHopDong", "Gui", "POST", customer);
+        await Verify("GiaHanHopDong", "Duyet", "PUT", customer, 403);
+        await Verify("GiaHanHopDong", "TuChoi", "PUT", customer, 403);
+        await Verify("TinNhan", "Send", "POST", customer);
+        await Verify("TinNhan", "GetMessages", "GET", customer);
+        await Verify("TinNhan", "Delete", "DELETE", customer, 403);
+        await Verify("HoaDonPdf", "ExportPdf", "GET", anonymous, 401);
+        await Verify("GiaHanHopDong", "GetAll", "GET", backupOperator, 403);
         await Verify("Phong", "GetPhongs", "GET", anonymous, 401);
         await Verify("KhachThue", "GetAll", "GET", anonymous, 401);
         await Verify("Anh", "Get", "GET", anonymous, 401);

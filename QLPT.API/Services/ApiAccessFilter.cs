@@ -64,6 +64,15 @@ public sealed class ApiAccessFilter(Klcn052QuanLyPhongTroContext database) : IAs
             bool managerAllowed = false;
             switch (action.ControllerName)
             {
+                case "GiaHanHopDong":
+                    if (action.ActionName == "GetAll") managerAllowed = true;
+                    else if (action.ActionName is "Duyet" or "TuChoi") {
+                        var requestId = RouteId("id");
+                        managerAllowed = await database.GiaHanHopDongs.AnyAsync(g => g.MaGiaHan == requestId &&
+                            g.MaHopDongNavigation.MaPhongNavigation.MaCoSo.HasValue &&
+                            sites.Contains(g.MaHopDongNavigation.MaPhongNavigation.MaCoSo.Value));
+                    }
+                    break;
                 case "YeuCauHuyDatPhong":
                     // Controller scopes every read/write to assigned sites, including request IDs.
                     managerAllowed = action.ActionName is "GetAll" or "Create" or "XuLy";
@@ -174,6 +183,18 @@ public sealed class ApiAccessFilter(Klcn052QuanLyPhongTroContext database) : IAs
         bool allowed = false;
         switch (action.ControllerName)
         {
+            case "GiaHanHopDong":
+                allowed = action.ActionName is "GetAll" or "Gui";
+                break;
+            case "HoaDonPdf":
+                allowed = read && action.ActionName == "ExportPdf";
+                break;
+            case "TinNhan":
+                allowed = action.ActionName is "GetMessages" or "Send" or "MarkRead";
+                break;
+            case "Auth":
+                allowed = action.ActionName == "ChangePassword";
+                break;
             case "YeuCauHuyDatPhong":
                 // Controller derives ownership from session MaKhach; customer cannot approve.
                 allowed = action.ActionName is "GetAll" or "Create";
@@ -188,6 +209,8 @@ public sealed class ApiAccessFilter(Klcn052QuanLyPhongTroContext database) : IAs
             case "CoSo" or "LoaiPhong" or "DichVu": allowed = read && action.ActionName == "GetAll"; break;
             case "Anh": allowed = read && action.ActionName == "Get"; break;
             case "KhachThue":
+                if (action.ActionName == "Update" && Id("id") == customerId)
+                { await next(); return; }
                 allowed = read && action.ActionName is "GetById" or "GetHistory" && Id("id") == customerId;
                 break;
             case "HopDong":
@@ -218,6 +241,8 @@ public sealed class ApiAccessFilter(Klcn052QuanLyPhongTroContext database) : IAs
                 }
                 break;
             case "ThongBao":
+                if (read && action.ActionName == "GetByCustomer" && Id("maKhach") == customerId)
+                { await next(); return; }
                 if (action.ActionName is "GetByAccount" or "MarkRead") allowed = Id("maTaiKhoan") == accountId;
                 else if (action.ActionName == "PhanHoi" && context.ActionArguments.Values.OfType<PhanHoiDto>().FirstOrDefault() is { } reply)
                 { allowed = reply.MaTaiKhoan == accountId || reply.MaTaiKhoan == 0; if (allowed) reply.MaTaiKhoan = accountId; }

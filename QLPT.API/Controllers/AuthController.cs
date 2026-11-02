@@ -78,6 +78,56 @@ public class AuthController : ControllerBase
         return password == stored;
     }
 
+    [HttpPost("register")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Register(CustomerAccountModel dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.TenDangNhap) || dto.TenDangNhap.Trim().Length > 50 ||
+            string.IsNullOrWhiteSpace(dto.MatKhau) || dto.MatKhau.Length < 6 ||
+            System.Text.Encoding.UTF8.GetByteCount(dto.MatKhau) > 72)
+            return BadRequest(new { message = "Tên đăng nhập tối đa 50 ký tự, mật khẩu từ 6 ký tự và tối đa 72 byte." });
+        if (await _context.TaiKhoans.AnyAsync(a => a.TenDangNhap == dto.TenDangNhap.Trim()))
+            return Conflict(new { message = "Tên đăng nhập đã tồn tại." });
+        await using var tx = await _context.Database.BeginTransactionAsync();
+        var tenants = new QLPT.API.Controllers.KhachThueController(_context) { ControllerContext = ControllerContext };
+        var result = await tenants.Create(new KhachThue { HoTen = dto.HoTen, Cccd = dto.Cccd,
+            SoDienThoai = dto.SoDienThoai, Email = dto.Email, DiaChi = dto.DiaChi });
+        if (result is not OkObjectResult ok) return result;
+        var tenant = (KhachThue)ok.Value!.GetType().GetProperty("data")!.GetValue(ok.Value)!;
+        _context.TaiKhoans.Add(new TaiKhoan { TenDangNhap = dto.TenDangNhap.Trim(),
+            MatKhauHash = BCrypt.Net.BCrypt.HashPassword(dto.MatKhau), MaKhach = tenant.MaKhach,
+            VaiTro = "Customer", TrangThai = "Active", NgayTao = DateTime.Now });
+        await _context.SaveChangesAsync();
+        await tx.CommitAsync();
+        return Ok(new { success = true, maKhach = tenant.MaKhach, message = "Đã tạo hồ sơ và cấp tài khoản khách." });
+    }
+    public sealed record CustomerAccountModel(string TenDangNhap, string MatKhau, string HoTen,
+        string? Cccd, string? SoDienThoai, string? Email, string? DiaChi);
+
+    [HttpPost("change-password")]
+    // Password changes use the signed-in account, never a client-selected account.
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var accountId))
+            return Unauthorized();
+        if (string.IsNullOrWhiteSpace(model.MatKhauMoi) || model.MatKhauMoi.Length < 8 ||
+            System.Text.Encoding.UTF8.GetByteCount(model.MatKhauMoi) > 72)
+            return BadRequest(new { message = "Mật khẩu mới từ 8 ký tự, tối đa 72 byte UTF-8." });
+        var account = await _context.TaiKhoans.FindAsync(accountId);
+        if (account == null || (model.MaKhach > 0 && model.MaKhach != account.MaKhach)) return Forbid();
+        if (!VerifyPassword(model.MatKhauHienTai, account.MatKhauHash))
+            return BadRequest(new { message = "Mật khẩu hiện tại không đúng." });
+        if (model.MatKhauMoi == model.MatKhauHienTai)
+            return BadRequest(new { message = "Mật khẩu mới phải khác mật khẩu hiện tại." });
+        account.MatKhauHash = BCrypt.Net.BCrypt.HashPassword(model.MatKhauMoi);
+        await _context.SaveChangesAsync();
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return Ok(new { success = true, message = "Đã đổi mật khẩu. Vui lòng đăng nhập lại." });
+    }
+
+    public sealed record ChangePasswordModel(int MaKhach, string MatKhauHienTai, string MatKhauMoi);
+
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {

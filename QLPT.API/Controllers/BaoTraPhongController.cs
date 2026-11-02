@@ -41,6 +41,27 @@ namespace QLPT.API.Controllers
         }
 
         // Khách gửi báo trả phòng
+        [HttpPut("{id:int}/duyet")]
+        public Task<IActionResult> Duyet(int id) => Process(id, true);
+
+        [HttpPut("{id:int}/tu-choi")]
+        public Task<IActionResult> TuChoi(int id) => Process(id, false);
+
+        private async Task<IActionResult> Process(int id, bool approve)
+        {
+            if (!User.IsInRole("Admin")) return Forbid();
+            await using var tx = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            var item = await _context.BaoTraPhongs.FindAsync(id);
+            if (item == null) return NotFound();
+            if (item.TrangThai != NghiepVu.BaoTra.ChoXuLy)
+                return Conflict(new { message = "Yêu cầu đã được xử lý." });
+            item.TrangThai = approve ? "Đã duyệt" : "Từ chối";
+            await _context.SaveChangesAsync();
+            await tx.CommitAsync();
+            return Ok(new { success = true, message = approve ?
+                "Đã duyệt yêu cầu trả phòng. Cần quyết toán và thanh lý riêng." : "Đã từ chối yêu cầu trả phòng." });
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] BaoTraPhong model)
         {
@@ -49,6 +70,9 @@ namespace QLPT.API.Controllers
                 if (model == null) return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ" });
                 if (model.MaHopDong <= 0 || model.MaKhach <= 0)
                     return BadRequest(new { success = false, message = "Chọn hợp đồng và khách thuê trong danh sách." });
+                if (!model.NgayDuKienTra.HasValue || string.IsNullOrWhiteSpace(model.LyDo) ||
+                    model.LyDo.Trim().Length > 300 || model.GhiChu?.Length > 300)
+                    return BadRequest(new { message = "Chọn ngày dự kiến trả; lý do và ghi chú tối đa 300 ký tự." });
                 var homNay = DateOnly.FromDateTime(DateTime.Now);
                 if (model.NgayDuKienTra.HasValue && model.NgayDuKienTra < homNay)
                     return BadRequest(new { success = false, message = "Ngày dự kiến trả phòng không được trước hôm nay." });

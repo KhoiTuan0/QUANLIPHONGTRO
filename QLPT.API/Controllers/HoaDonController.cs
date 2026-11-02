@@ -134,6 +134,21 @@ namespace QLPT.API.Controllers
         }
 
         // 4. Lập hóa đơn nhập tay tổng tiền (khi không có chỉ số hoặc cần điều chỉnh).
+        [HttpGet("hop-dong/{maHopDong:int}/vi-pham-chua-tinh")]
+        public async Task<IActionResult> PendingViolations(int maHopDong)
+        {
+            var contract = await _context.HopDongs.AsNoTracking().FirstOrDefaultAsync(h => h.MaHopDong == maHopDong);
+            if (contract == null) return NotFound();
+            var start = contract.NgayBatDau.ToDateTime(TimeOnly.MinValue);
+            var end = contract.NgayKetThuc.ToDateTime(TimeOnly.MinValue).AddDays(1);
+            return Ok(await _context.ViPhams.AsNoTracking().Where(v =>
+                v.MaPhong == contract.MaPhong && v.MaKhach == contract.MaKhachDaiDien &&
+                v.TrangThai == NghiepVu.ViPham.DaXuLy && v.TienPhat > 0 && !v.DuocTinhHoaDon &&
+                v.NgayViPham >= start && v.NgayViPham < end &&
+                !_context.ChiTietHoaDons.Any(c => c.MaViPham == v.MaViPham))
+                .Select(v => new { v.MaViPham, v.NoiDung, v.TienPhat, v.NgayViPham }).ToListAsync());
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateManual([FromBody] LapHoaDonDto dto)
         {
@@ -166,6 +181,12 @@ namespace QLPT.API.Controllers
                     new ChiTietHoaDon { NoiDung = noiDung, SoLuong = 1, DonGia = dto.TongTien, ThanhTien = dto.TongTien }
                 });
                 await _context.SaveChangesAsync();
+                foreach (var violationId in (dto.MaViPhams ?? new()).Distinct())
+                {
+                    var controller = new ViPhamHoaDonController(_context) { ControllerContext = ControllerContext };
+                    var added = await controller.AddToInvoice(violationId, new GanPhatHoaDonDto(hoaDon.MaHoaDon));
+                    if (added is not OkObjectResult) return added;
+                }
                 await transaction.CommitAsync();
                 return Ok(new { success = true, message = "Đã lập hóa đơn.", data = HoaDonBuilder.ToDto(hoaDon) });
             }
@@ -353,6 +374,7 @@ namespace QLPT.API.Controllers
     /// <summary>Kỳ hóa đơn nhận được ở dạng "yyyy-MM" (WPF) hoặc tách Thang/Nam.</summary>
     public class LapHoaDonDto
     {
+        public List<int>? MaViPhams { get; set; }
         public int MaHopDong { get; set; }
         public string? ThangNam { get; set; }
         public int? Thang { get; set; }

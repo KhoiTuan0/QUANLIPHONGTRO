@@ -12,6 +12,7 @@ class RoomListScreen extends StatefulWidget {
 class _RoomListScreenState extends State<RoomListScreen> {
   late Future<List<dynamic>> _roomsFuture;
   List<dynamic> _currentRooms = [];
+  String _selectedFilter = 'Tất cả';
 
   @override
   void initState() {
@@ -27,35 +28,54 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
   Color _getStatusColor(String? status) {
     switch (status) {
-      case 'Available': return Colors.green;
-      case 'Occupied': return Colors.blueAccent;
-      case 'Booked': return Colors.orange;
-      default: return Colors.grey;
+      case 'Trống':
+        return Colors.green;
+      case 'Đang thuê':
+        return Colors.blueAccent;
+      case 'Đã đặt cọc':
+        return Colors.orange;
+      case 'Bảo trì':
+        return Colors.redAccent;
+      default:
+        return Colors.grey;
     }
   }
 
-  String _getStatusText(String? status) {
-    switch (status) {
-      case 'Available': return 'Còn trống';
-      case 'Occupied': return 'Đang ở';
-      case 'Booked': return 'Đã cọc';
-      default: return 'Bảo trì';
-    }
-  }
-
-  // Dialog Thêm phòng mới với giao diện hiện đại và kiểm tra trùng tên
   void _showAddRoomDialog() async {
-    final roomNumberCtrl = TextEditingController();
-    final floorCtrl = TextEditingController();
-    final priceCtrl = TextEditingController();
-    
-    int? selectedRoomTypeId;
+    final tenPhongCtrl = TextEditingController();
+    final tangCtrl = TextEditingController();
+    final giaThueCtrl = TextEditingController();
+    final moTaCtrl = TextEditingController();
+
+    int? selectedMaLoaiPhong;
     List<dynamic> roomTypes = [];
+    int? selectedMaCoSo;
+    final facilityIds = _currentRooms
+        .whereType<Map>()
+        .map((room) => int.tryParse(
+              (room['maCoSo'] ?? room['MaCoSo'] ?? '').toString(),
+            ))
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toSet()
+        .toList()..sort();
+    if (facilityIds.isNotEmpty) selectedMaCoSo = facilityIds.first;
+    bool isSaving = false;
 
     try {
       roomTypes = await ApiService.getRoomTypes();
       if (roomTypes.isNotEmpty) {
-        selectedRoomTypeId = roomTypes.first['roomTypeId'];
+        final firstType = roomTypes.first;
+        if (firstType is Map) {
+          selectedMaLoaiPhong = int.tryParse(
+            (firstType['maLoaiPhong'] ??
+                        firstType['MaLoaiPhong'] ??
+                        firstType['roomTypeId'] ??
+                        firstType['RoomTypeId'])
+                    ?.toString() ??
+                '',
+          );
+        }
       }
     } catch (_) {}
 
@@ -64,44 +84,129 @@ class _RoomListScreenState extends State<RoomListScreen> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
+        builder: (dialogContext, setDialogState) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Text('Thêm Phòng Mới', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              'Thêm Phòng Mới',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                    controller: roomNumberCtrl,
-                    decoration: _dialogInputDecoration('Số/Tên phòng (VD: P101)', Icons.meeting_room_outlined),
+                    controller: tenPhongCtrl,
+                    decoration: _dialogInputDecoration(
+                      'Tên phòng (VD: Phòng A105)',
+                      Icons.meeting_room_outlined,
+                    ),
                   ),
                   const SizedBox(height: 14),
                   TextField(
-                    controller: floorCtrl,
+                    controller: tangCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: _dialogInputDecoration('Tầng số', Icons.layers_outlined),
+                    decoration: _dialogInputDecoration(
+                      'Tầng số',
+                      Icons.layers_outlined,
+                    ),
                   ),
                   const SizedBox(height: 14),
                   TextField(
-                    controller: priceCtrl,
+                    controller: giaThueCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: _dialogInputDecoration('Giá thuê hàng tháng (VNĐ)', Icons.payments_outlined),
+                    decoration: _dialogInputDecoration(
+                      'Giá thuê hàng tháng (VNĐ)',
+                      Icons.payments_outlined,
+                    ),
                   ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: moTaCtrl,
+                    maxLines: 2,
+                    decoration: _dialogInputDecoration(
+                      'Mô tả tiện ích phòng',
+                      Icons.description_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  if (facilityIds.isNotEmpty)
+                    DropdownButtonFormField<int>(
+                      value: selectedMaCoSo,
+                      isExpanded: true,
+                      decoration: _dialogInputDecoration(
+                        'Cơ sở quản lý', Icons.apartment_rounded,
+                      ),
+                      items: facilityIds.map((id) => DropdownMenuItem<int>(
+                        value: id,
+                        child: Text('Cơ sở #$id'),
+                      )).toList(),
+                      onChanged: isSaving ? null : (value) {
+                        setDialogState(() => selectedMaCoSo = value);
+                      },
+                    )
+                  else
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Chưa có mã cơ sở trong dữ liệu phòng. '
+                        'Cần API danh sách cơ sở để tạo phòng đầu tiên.',
+                        style: TextStyle(color: Colors.deepOrange),
+                      ),
+                    ),
                   const SizedBox(height: 14),
                   if (roomTypes.isNotEmpty)
                     DropdownButtonFormField<int>(
-                      value: selectedRoomTypeId,
-                      decoration: _dialogInputDecoration('Loại phòng', Icons.category_outlined),
-                      items: roomTypes.map<DropdownMenuItem<int>>((type) {
+                      value: selectedMaLoaiPhong,
+                      isExpanded: true,
+                      decoration: _dialogInputDecoration(
+                        'Loại phòng',
+                        Icons.category_outlined,
+                      ),
+                      items: roomTypes.where((type) {
+                        final id = int.tryParse((type['maLoaiPhong'] ?? type['MaLoaiPhong'] ?? type['roomTypeId'] ?? type['RoomTypeId'])?.toString() ?? '');
+                        return id != null && id > 0;
+                      }).map<DropdownMenuItem<int>>((type) {
+                        final typeId = int.tryParse(
+                          (type['maLoaiPhong'] ??
+                                      type['MaLoaiPhong'] ??
+                                      type['roomTypeId'] ??
+                                      type['RoomTypeId'])
+                                  ?.toString() ??
+                              '',
+                        );
+                        final typeName =
+                            type['tenLoaiPhong'] ??
+                            type['TenLoaiPhong'] ??
+                            type['typeName'] ??
+                            type['TypeName'] ??
+                            'Loại phòng';
+                        final basePrice =
+                            type['giaMacDinh'] ??
+                            type['GiaMacDinh'] ??
+                            type['basePrice'] ??
+                            type['BasePrice'] ??
+                            0;
+                        if (typeId == null) {
+                          return const DropdownMenuItem<int>(
+                            value: null,
+                            enabled: false,
+                            child: Text('Loại phòng không có mã hợp lệ'),
+                          );
+                        }
                         return DropdownMenuItem<int>(
-                          value: type['roomTypeId'],
-                          child: Text('${type['typeName']} (${type['basePrice']} đ)'),
+                          value: typeId,
+                          child: Text(
+                            '$typeName ($basePrice đ)',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         );
                       }).toList(),
                       onChanged: (val) {
                         setDialogState(() {
-                          selectedRoomTypeId = val;
+                          selectedMaLoaiPhong = val;
                         });
                       },
                     ),
@@ -110,56 +215,95 @@ class _RoomListScreenState extends State<RoomListScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Hủy', style: TextStyle(color: Color(0xFF64748B))),
+                onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                child: const Text(
+                  'Hủy',
+                  style: TextStyle(color: Color(0xFF64748B)),
+                ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                onPressed: () async {
-                  final roomNum = roomNumberCtrl.text.trim();
-                  final floorText = floorCtrl.text.trim();
-                  final priceText = priceCtrl.text.trim();
+                onPressed: isSaving ? null : () async {
+                  final tenPhong = tenPhongCtrl.text.trim();
+                  final tang = int.tryParse(tangCtrl.text.trim());
+                  final giaThue = double.tryParse(
+                    giaThueCtrl.text.trim().replaceAll(',', '.'),
+                  );
 
-                  if (roomNum.isEmpty || floorText.isEmpty || priceText.isEmpty) {
-                    _showSnackBar('Vui lòng điền đầy đủ thông tin!', isError: true);
+                  if (tenPhong.isEmpty) {
+                    _showSnackBar('Vui lòng nhập tên phòng.', isError: true);
+                    return;
+                  }
+                  if (tang == null || tang < 0) {
+                    _showSnackBar('Tầng phải là số nguyên không âm.', isError: true);
+                    return;
+                  }
+                  if (giaThue == null || !giaThue.isFinite || giaThue <= 0) {
+                    _showSnackBar('Giá thuê phải là số lớn hơn 0.', isError: true);
+                    return;
+                  }
+                  if (selectedMaLoaiPhong == null || selectedMaLoaiPhong! <= 0) {
+                    _showSnackBar('Vui lòng chọn loại phòng hợp lệ.', isError: true);
                     return;
                   }
 
-                  // Kiểm tra trùng tên phòng
-                  bool isDuplicate = _currentRooms.any((r) =>
-                      r['roomNumber'].toString().trim().toLowerCase() == roomNum.toLowerCase());
+                  if (selectedMaCoSo == null) {
+                     _showSnackBar('Vui lòng chọn cơ sở trước khi thêm phòng.', isError: true);
+                     return;
+                   }
 
+                  final isDuplicate = _currentRooms.any((r) =>
+                    (r['tenPhong'] ?? r['TenPhong'] ?? r['roomNumber'] ?? '')
+                      .toString().trim().toLowerCase() == tenPhong.toLowerCase());
                   if (isDuplicate) {
-                    _showSnackBar('Phòng "$roomNum" đã tồn tại trong hệ thống!', isError: true);
+                    _showSnackBar('Phòng "$tenPhong" đã tồn tại!', isError: true);
                     return;
                   }
 
-                  final data = {
-                    'roomNumber': roomNum,
-                    'floor': int.parse(floorText),
-                    'basePrice': double.parse(priceText),
-                    'status': 'Available',
-                    'roomTypeId': selectedRoomTypeId,
+                  // MaPhong là khóa chính do backend/database cấp.
+                  // Không gửi maPhong = 0 hoặc tự lấy số từ tên phòng.
+                  final data = <String, dynamic>{
+                    'tenPhong': tenPhong,
+                    'tang': tang,
+                    'giaThue': giaThue,
+                    'trangThai': 'Trống',
+                    'moTa': moTaCtrl.text.trim(),
+                    'maLoaiPhong': selectedMaLoaiPhong,
+                    'maCoSo': selectedMaCoSo,
                   };
 
-                  bool success = await ApiService.createRoom(data);
-
-                  if (mounted) {
-                    Navigator.pop(context);
+                  setDialogState(() => isSaving = true);
+                  try {
+                    final success = await ApiService.createRoom(data);
+                    if (!mounted || !dialogContext.mounted) return;
                     if (success) {
-                      _showSnackBar('Thêm phòng mới thành công!', isError: false);
+                      Navigator.pop(dialogContext);
+                      _showSnackBar('Thêm phòng mới thành công!');
                       _loadRooms();
                     } else {
-                      _showSnackBar('Thêm phòng thất bại!', isError: true);
+                      _showSnackBar('Thêm phòng thất bại. Kiểm tra dữ liệu và API.', isError: true);
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      _showSnackBar('Không thể thêm phòng: $e', isError: true);
+                    }
+                  } finally {
+                    if (dialogContext.mounted) {
+                      setDialogState(() => isSaving = false);
                     }
                   }
                 },
-                child: const Text('Thêm phòng', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Thêm phòng',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           );
@@ -184,9 +328,18 @@ class _RoomListScreenState extends State<RoomListScreen> {
       labelText: label,
       labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
       prefixIcon: Icon(icon, color: const Color(0xFF2563EB), size: 20),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+      ),
       filled: true,
       fillColor: const Color(0xFFF8FAFC),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -203,113 +356,245 @@ class _RoomListScreenState extends State<RoomListScreen> {
         elevation: 2,
         onPressed: _showAddRoomDialog,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Thêm phòng', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: const Text(
+          'Thêm phòng',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: FutureBuilder<List<dynamic>>(
         future: _roomsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+            );
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Lỗi tải dữ liệu: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
-          }
-
-          final rooms = snapshot.data ?? [];
-          _currentRooms = rooms;
-
-          if (rooms.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.meeting_room_outlined, size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 12),
-                  const Text('Chưa có phòng nào trong hệ thống', style: TextStyle(color: Color(0xFF64748B), fontSize: 16)),
-                ],
+              child: Text(
+                'Lỗi tải dữ liệu: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red),
               ),
             );
           }
 
-          return RefreshIndicator(
-            color: const Color(0xFF2563EB),
-            onRefresh: () async => _loadRooms(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: rooms.length,
-              itemBuilder: (context, index) {
-                final room = rooms[index];
-                final color = _getStatusColor(room['status']);
+          _currentRooms = snapshot.data ?? [];
 
-                return Card(
-                  elevation: 0,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+          // Lọc danh sách theo trạng thái được chọn trên giao diện
+          final filteredRooms = _selectedFilter == 'Tất cả'
+              ? _currentRooms
+              : _currentRooms
+                    .where(
+                      (r) => (r['trangThai'] ?? r['status']) == _selectedFilter,
+                    )
+                    .toList();
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(17),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF818CF8)]),
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: const [BoxShadow(color: Color(0x224F46E5), blurRadius: 16, offset: Offset(0, 6))],
                   ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => RoomDetailScreen(room: room)),
-                      );
-                      _loadRooms();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(Icons.door_front_door_rounded, color: color, size: 26),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Phòng ${room['roomNumber']}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E293B)),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Tầng ${room['floor']} • ${room['typeName'] ?? "Phòng tiêu chuẩn"}',
-                                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '${room['basePrice']} VNĐ/tháng',
-                                  style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 14),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              _getStatusText(room['status']),
-                              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                          ),
-                        ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(children: [
+                        Icon(Icons.auto_awesome_rounded, color: Color(0xFFFFE082), size: 20),
+                        SizedBox(width: 8),
+                        Text('Tổng quan phòng trọ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      ]),
+                      const SizedBox(height: 7),
+                      Text('${_currentRooms.length} phòng đang quản lý • ${_currentRooms.where((r) => (r['trangThai'] ?? r['status']) == 'Trống').length} phòng trống',
+                          style: const TextStyle(color: Color(0xFFE0E7FF), fontSize: 13)),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.tune_rounded, color: Color(0xFF4F46E5)),
+                    const SizedBox(width: 8),
+                    const Expanded(child: Text('Danh sách phòng', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF172554)))),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: const Color(0xFFC7D2FE)),
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedFilter,
+                          borderRadius: BorderRadius.circular(16),
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF4F46E5)),
+                          items: ['Tất cả', 'Trống', 'Đang thuê', 'Đã đặt cọc', 'Bảo trì']
+                              .map((filter) => DropdownMenuItem(value: filter, child: Text(filter, style: const TextStyle(fontSize: 13))))
+                              .toList(),
+                          onChanged: (value) { if (value != null) setState(() => _selectedFilter = value); },
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: filteredRooms.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.meeting_room_outlined,
+                              size: 64,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Không có phòng nào ở trạng thái "$_selectedFilter"',
+                              style: const TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        color: const Color(0xFF2563EB),
+                        onRefresh: () async => _loadRooms(),
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          itemCount: filteredRooms.length,
+                          itemBuilder: (context, index) {
+                            final room = filteredRooms[index];
+                            final tenPhong =
+                                room['tenPhong'] ??
+                                room['roomNumber'] ??
+                                'Phòng';
+                            final tang = room['tang'] ?? room['floor'] ?? 1;
+                            final giaThue =
+                                room['giaThue'] ?? room['basePrice'] ?? 0;
+                            final trangThai =
+                                room['trangThai'] ?? room['status'] ?? 'Trống';
+                            final color = _getStatusColor(trangThai);
+
+                            return Card(
+                              elevation: 0,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: const BorderSide(
+                                  color: Color(0xFFDCE4FA),
+                                ),
+                              ),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          RoomDetailScreen(room: room),
+                                    ),
+                                  );
+                                  _loadRooms();
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          color: color.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.door_front_door_rounded,
+                                          color: color,
+                                          size: 26,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              tenPhong,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Tầng $tang • ${room['moTa'] ?? "Phòng trọ tiện nghi"}',
+                                              style: const TextStyle(
+                                                color: Color(0xFF64748B),
+                                                fontSize: 13,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              '$giaThue VNĐ/tháng',
+                                              style: const TextStyle(
+                                                color: Color(0xFF2563EB),
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: color.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          trangThai,
+                                          style: TextStyle(
+                                            color: color,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+              ),
+            ],
           );
         },
       ),

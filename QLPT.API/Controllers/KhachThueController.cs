@@ -168,6 +168,12 @@ namespace QLPT.API.Controllers
                 if (loi != null) return BadRequest(new { success = false, message = loi });
                 var item = await _context.KhachThues.FindAsync(id);
                 if (item == null) return NotFound(new { success = false, message = "Không tìm thấy khách thuê" });
+                if (User.IsInRole("Customer") &&
+                    (model.HoTen != null && model.HoTen.Trim() != item.HoTen ||
+                     model.Cccd != null && model.Cccd.Trim() != item.Cccd ||
+                     model.Provided.Contains(nameof(model.NgaySinh)) && model.NgaySinh != item.NgaySinh ||
+                     model.Provided.Contains(nameof(model.GioiTinh)) && model.GioiTinh?.Trim() != item.GioiTinh))
+                    return BadRequest(new { message = "Để sửa thông tin định danh, vui lòng liên hệ chủ trọ hoặc quản lý." });
                 var oldValues = new Dictionary<string, string?>
                 {
                     ["Họ tên"] = item.HoTen, ["CCCD"] = item.Cccd,

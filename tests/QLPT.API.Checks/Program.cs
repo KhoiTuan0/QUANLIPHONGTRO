@@ -8,6 +8,7 @@ internal static class Program
             checks += await ApiAccessChecks.RunAsync();
             checks += await ApiMoneyChecks.RunAsync();
             checks += await MeterAiChecks.RunAsync();
+            checks += await MobileIntegrationChecks.RunAsync();
             Console.WriteLine($"PASS: {checks} independent API validation, access and image checks. No SQL connection was used.");
             return 0;
         }
