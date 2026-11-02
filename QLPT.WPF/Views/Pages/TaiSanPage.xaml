@@ -1,0 +1,124 @@
+﻿<UserControl x:Class="QLPT.WPF.Views.Pages.TaiSanPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:vm="clr-namespace:QLPT.WPF.ViewModels">
+    <UserControl.DataContext>
+        <vm:TaiSanViewModel/>
+    </UserControl.DataContext>
+    <Grid Margin="20,16,20,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: All TaiSan -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Command="{Binding LoadAllCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="Refresh" VerticalAlignment="Center"/>
+                            <TextBlock Text="Tải lại" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding AddTaiSanCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="Plus" VerticalAlignment="Center"/>
+                            <TextBlock Text="Thêm tài sản mẫu" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding GanVaoPhongCommand}" Style="{StaticResource MaterialDesignOutlinedButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="ArrowRight" VerticalAlignment="Center"/>
+                            <TextBlock Text="Gán vào phòng" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <md:Card Grid.Row="1" UniformCornerRadius="12" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Danh sách tài sản mẫu" FontWeight="SemiBold"
+                                   Margin="16,12,0,8" FontSize="14"/>
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding AllItems}" SelectedItem="{Binding SelectedItem}"
+                                  AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
+                                   BorderThickness="0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Mã" Binding="{Binding MaTaiSan}" Width="0.6*" MinWidth="60"/>
+                                <DataGridTextColumn Header="Tên tài sản" Binding="{Binding TenTaiSan}" Width="*"/>
+                                <DataGridTextColumn Header="Giá trị tham khảo" Binding="{Binding GiaTriDisplay}" Width="1.4*" MinWidth="140"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </md:Card>
+            </Grid>
+
+            <!-- Right: TaiSan in phong -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBox Text="{Binding MaPhongInput, UpdateSourceTrigger=PropertyChanged}"
+                             md:HintAssist.Hint="Mã phòng"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Width="120" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <Button Command="{Binding LoadPhongCommand}" Style="{StaticResource MaterialDesignOutlinedButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="Magnify" VerticalAlignment="Center"/>
+                            <TextBlock Text="Tải" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <md:Card Grid.Row="1" UniformCornerRadius="12" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Tài sản trong phòng" FontWeight="SemiBold"
+                                   Margin="16,12,0,8" FontSize="14"/>
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding PhongItems}" SelectedItem="{Binding SelectedPhongItem}"
+                                  AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
+                                   BorderThickness="0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Mã" Binding="{Binding MaTaiSanPhong}" Width="0.6*" MinWidth="60"/>
+                                <DataGridTextColumn Header="Tên tài sản" Binding="{Binding TenTaiSan}" Width="*"/>
+                                <DataGridTextColumn Header="Số lượng" Binding="{Binding SoLuong}" Width="0.8*" MinWidth="80"/>
+                                <DataGridTextColumn Header="Tình trạng" Binding="{Binding TinhTrang}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </md:Card>
+            </Grid>
+        </Grid>
+
+        <!-- Error + Loading -->
+        <TextBlock Grid.Row="0" Grid.RowSpan="1" Text="{Binding ErrorMessage}" Foreground="Crimson"
+                   HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,8" TextWrapping="Wrap" MaxWidth="400"/>
+        <Grid Grid.RowSpan="1" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+            <Border Background="{DynamicResource Win11ContentBrush}" Opacity="0.6"/>
+            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                         IsIndeterminate="True" Width="48" Height="48"
+                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
+    </Grid>
+</UserControl>
+

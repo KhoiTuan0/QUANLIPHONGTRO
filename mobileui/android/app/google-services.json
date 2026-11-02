@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1094378277963",
+    "project_id": "quanlyphongtro-4a83a",
+    "storage_bucket": "quanlyphongtro-4a83a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1094378277963:android:94cebddb6e1ceb402151ce",
+        "android_client_info": {
+          "package_name": "com.example.mobileui"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1094378277963-kh0ppkagklrjve6saqjlm9kndl9isife.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mobileui",
+            "certificate_hash": "18c8c9ba89b5ef5f8f3ae240c98d3e1ec88a6ee4"
+          }
+        },
+        {
+          "client_id": "1094378277963-kdjpvpjd985vt8pa2njgmfg8ji3jc6v4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFwV7mz3mHpLw6uK7jbW5iQ8GkZEg6V80"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1094378277963-kdjpvpjd985vt8pa2njgmfg8ji3jc6v4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

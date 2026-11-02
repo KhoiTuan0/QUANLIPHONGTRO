@@ -1,0 +1,27 @@
+﻿<UserControl x:Class="QLPT.WPF.Views.Pages.ThuChiPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:QLPT.WPF.Controls">
+
+    <ctl:CrudTable Margin="20,16,20,20"
+                   ItemsSource="{Binding Items}"
+                   SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                   ReloadCommand="{Binding LoadCommand}"
+                   AddCommand="{Binding ThemCommand}"
+                   DeleteCommand="{Binding XoaCommand}"
+                   ShowEdit="False"
+                   IsBusy="{Binding IsBusy}"
+                   ErrorMessage="{Binding ErrorMessage}"
+                   AddLabel="Thêm phiếu"
+                   DeleteLabel="Xóa phiếu này"
+                   SearchHint="Tìm theo mã, loại, mô tả, người ghi nhận…">
+        <ctl:CrudTable.Columns>
+            <DataGridTextColumn Header="MÃ TC"          Binding="{Binding MaThuChi}"     Width="0.8*" MinWidth="80"/>
+            <DataGridTextColumn Header="LOẠI"           Binding="{Binding Loai}"         Width="0.7*" MinWidth="70"/>
+            <DataGridTextColumn Header="SỐ TIỀN"        Binding="{Binding SoTienDisplay}" Width="1.3*" MinWidth="130"/>
+            <DataGridTextColumn Header="MÔ TẢ"          Binding="{Binding MoTa}"         Width="2*" MinWidth="200"/>
+            <DataGridTextColumn Header="NGÀY GHI NHẬN"  Binding="{Binding NgayGhiNhan}"  Width="1.3*" MinWidth="130"/>
+            <DataGridTextColumn Header="NGƯỜI GHI NHẬN" Binding="{Binding NguoiGhiNhan}" Width="*"/>
+        </ctl:CrudTable.Columns>
+    </ctl:CrudTable>
+</UserControl>

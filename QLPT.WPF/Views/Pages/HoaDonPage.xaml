@@ -1,0 +1,45 @@
+﻿<UserControl x:Class="QLPT.WPF.Views.Pages.HoaDonPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:ctl="clr-namespace:QLPT.WPF.Controls">
+
+    <ctl:CrudTable Margin="20,16,20,20"
+                   ItemsSource="{Binding Items}"
+                   SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                   ReloadCommand="{Binding LoadCommand}"
+                   AddCommand="{Binding TaoHoaDonCommand}"
+                   ShowEdit="False"
+                   ShowDelete="False"
+                   IsBusy="{Binding IsBusy}"
+                   ErrorMessage="{Binding ErrorMessage}"
+                   AddLabel="Tạo hóa đơn"
+                   AddIcon="FileDocument"
+                   SearchHint="Tìm theo mã hóa đơn, hợp đồng, tháng năm…">
+
+        <!-- Nút nghiệp vụ riêng: thu tiền cho hóa đơn đang chọn -->
+        <ctl:CrudTable.ExtraActions>
+            <Button Command="{Binding ThuTienCommand}"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Height="36" Padding="12,0">
+                <StackPanel Orientation="Horizontal">
+                    <md:PackIcon Kind="CashMultiple" Width="16" Height="16"
+                                 VerticalAlignment="Center"/>
+                    <TextBlock Text="Thu tiền" Margin="6,0,0,0" FontSize="13"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </ctl:CrudTable.ExtraActions>
+
+        <ctl:CrudTable.Columns>
+            <DataGridTextColumn Header="MÃ HĐON"    Binding="{Binding MaHoaDon}"        Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="MÃ HĐỒNG"   Binding="{Binding MaHopDong}"       Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="THÁNG NĂM"  Binding="{Binding ThangNam}"        Width="1*" MinWidth="100"/>
+            <DataGridTextColumn Header="NGÀY LẬP"   Binding="{Binding NgayLap}"         Width="1.1*" MinWidth="110"/>
+            <DataGridTextColumn Header="TỔNG TIỀN"  Binding="{Binding TongTienDisplay}" Width="1.3*" MinWidth="130"/>
+            <DataGridTextColumn Header="ĐÃ THU"     Binding="{Binding DaThuDisplay}"    Width="1.2*" MinWidth="120"/>
+            <DataGridTextColumn Header="CÒN LẠI"    Binding="{Binding ConLaiDisplay}"   Width="1.2*" MinWidth="120"/>
+            <DataGridTextColumn Header="TRẠNG THÁI" Binding="{Binding TrangThai}"       Width="*"/>
+        </ctl:CrudTable.Columns>
+    </ctl:CrudTable>
+</UserControl>

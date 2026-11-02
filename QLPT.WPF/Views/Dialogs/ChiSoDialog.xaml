@@ -1,0 +1,51 @@
+﻿<Window x:Class="QLPT.WPF.Views.Dialogs.ChiSoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Thêm chỉ số điện nước" Style="{StaticResource Win10Dialog}"
+        Width="420" SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize" MaxHeight="700"
+        Background="{DynamicResource Win11SurfaceBrush}"
+        TextElement.Foreground="{DynamicResource Win11TextPrimaryBrush}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Thêm chỉ số điện nước" FontSize="18" FontWeight="Bold"
+                   Foreground="{DynamicResource Win11TextPrimaryBrush}" Margin="0,0,0,16"/>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,4,0,0">
+            <TextBox x:Name="TxtMaPhong" MaxLength="9" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Mã phòng *"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,10"/>
+            <ComboBox x:Name="CbLoai" md:HintAssist.Hint="Loại *"
+                      Style="{StaticResource MaterialDesignOutlinedComboBox}" Margin="0,0,0,10">
+                <ComboBoxItem Content="Điện" IsSelected="True"/>
+                <ComboBoxItem Content="Nước"/>
+            </ComboBox>
+            <TextBox x:Name="TxtThangNam" MaxLength="7" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Tháng năm (yyyy-MM) *"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,10"/>
+            <TextBox x:Name="TxtChiSoCu" MaxLength="12" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Chỉ số cũ *"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,10"/>
+            <TextBox x:Name="TxtChiSoMoi" MaxLength="12" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Chỉ số mới *"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+        </StackPanel>
+        </ScrollViewer>
+
+        <TextBlock Grid.Row="2" x:Name="TxtError" Foreground="Red" FontSize="12"
+                   TextWrapping="Wrap" Margin="0,8,0,4" Visibility="Collapsed"/>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Hủy" IsCancel="True" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,8,0"/>
+            <Button Content="Thêm" Click="BtnOk_Click"
+                    Style="{StaticResource MaterialDesignRaisedButton}" IsDefault="True"/>
+        </StackPanel>
+    </Grid>
+</Window>
+
+

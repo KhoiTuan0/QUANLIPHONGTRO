@@ -1,0 +1,28 @@
+﻿<UserControl x:Class="QLPT.WPF.Views.Pages.ChiSoPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:QLPT.WPF.Controls">
+
+    <ctl:CrudTable Margin="20,16,20,20"
+                   ItemsSource="{Binding Items}"
+                   SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                   ReloadCommand="{Binding LoadCommand}"
+                   AddCommand="{Binding ThemChiSoCommand}"
+                   DeleteCommand="{Binding XoaCommand}"
+                   ShowEdit="False"
+                   IsBusy="{Binding IsBusy}"
+                   ErrorMessage="{Binding ErrorMessage}"
+                   AddLabel="Thêm chỉ số"
+                   DeleteLabel="Xóa chỉ số này"
+                   SearchHint="Tìm theo mã, phòng, tháng năm…">
+        <ctl:CrudTable.Columns>
+            <DataGridTextColumn Header="MÃ CS"       Binding="{Binding MaChiSo}"  Width="0.8*" MinWidth="80"/>
+            <DataGridTextColumn Header="MÃ PHÒNG"    Binding="{Binding MaPhong}"  Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="THÁNG NĂM"   Binding="{Binding ThangNam}" Width="1*" MinWidth="100"/>
+            <DataGridTextColumn Header="LOẠI"        Binding="{Binding Loai}"     Width="0.8*" MinWidth="80"/>
+            <DataGridTextColumn Header="CHỈ SỐ CŨ"   Binding="{Binding ChiSoCu}"  Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="CHỈ SỐ MỚI"  Binding="{Binding ChiSoMoi}" Width="0.9*" MinWidth="90"/>
+            <DataGridTextColumn Header="SỐ TIÊU THỤ" Binding="{Binding SoTieu}"   Width="*"/>
+        </ctl:CrudTable.Columns>
+    </ctl:CrudTable>
+</UserControl>

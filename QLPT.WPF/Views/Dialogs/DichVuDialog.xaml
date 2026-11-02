@@ -1,0 +1,45 @@
+﻿<Window x:Class="QLPT.WPF.Views.Dialogs.DichVuDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:svc="clr-namespace:QLPT.WPF.Services"
+        Title="Dịch vụ" Style="{StaticResource Win10Dialog}" Width="460" SizeToContent="Height"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" MaxHeight="700"
+        Background="{DynamicResource Win11SurfaceBrush}"
+        TextElement.Foreground="{DynamicResource Win11TextPrimaryBrush}"
+        TextElement.FontFamily="{md:MaterialDesignFont}"
+        TextElement.FontSize="14">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Border Padding="28">
+        <StackPanel>
+            <TextBlock Text="Thêm dịch vụ" FontSize="18" FontWeight="Bold"
+                       Foreground="{DynamicResource Win11TextPrimaryBrush}" Margin="0,0,0,20"/>
+
+            <TextBox x:Name="TxtTen" MaxLength="100" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Tên dịch vụ *"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,12"/>
+            <TextBox x:Name="TxtDonViTinh" MaxLength="30" md:TextFieldAssist.CharacterCounterVisibility="Collapsed" md:HintAssist.Hint="Đơn vị tính (VD: kWh, m³, tháng)"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,12"/>
+            <TextBox x:Name="TxtDonGia" svc:MoneyInput.IsEnabled="True" md:HintAssist.Hint="Đơn giá"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,12"/>
+
+            <ComboBox x:Name="CboTrangThai" md:HintAssist.Hint="Trạng thái"
+                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                      Margin="0,0,0,12" SelectedIndex="0">
+                <ComboBoxItem Content="Đang áp dụng"/>
+                <ComboBoxItem Content="Ngừng"/>
+            </ComboBox>
+
+            <TextBlock x:Name="TxtError" Foreground="Crimson" TextWrapping="Wrap" Margin="0,4,0,8"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                <Button Content="Hủy" Style="{StaticResource MaterialDesignFlatButton}"
+                        Click="BtnCancel_Click" Margin="0,0,8,0"/>
+                <Button x:Name="BtnSave" Content="Lưu" Style="{StaticResource MaterialDesignRaisedButton}"
+                        Click="BtnSave_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+    </ScrollViewer>
+</Window>
+
+
