@@ -14,32 +14,56 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   // Mặc định chọn vai trò là Khách hàng
-  String _selectedRole = 'Customer'; 
+  String _selectedRole = 'Customer';
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  void _handleLogin() async {
+
+  Future<void> _handleLogin() async {
     final username = _usernameController.text.trim();
-    final password = _passwordController.text.trim();
+    final password = _passwordController.text;
 
     if (username.isEmpty || password.isEmpty) {
-      _showSnackBar('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!', isError: true);
+      _showSnackBar(
+        'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!',
+        isError: true,
+      );
       return;
     }
 
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _isLoading = true);
 
     try {
       final response = await ApiService.login(username, password);
 
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (!mounted) return;
-
       if (response['success'] == true) {
-        final String serverRole = response['vaiTro'] ?? _selectedRole;
+        final serverRole = response['vaiTro'] as String?;
+        if (serverRole == null) {
+          _showSnackBar(
+            'Máy chủ không trả về vai trò tài khoản. Vui lòng kiểm tra AuthController.',
+            isError: true,
+          );
+          return;
+        }
+
+        // Không cho vào nhầm khu vực nếu vai trò chọn trên form không khớp tài khoản.
+        if (serverRole != _selectedRole) {
+          final requiredRole = serverRole == 'Admin'
+              ? 'Chủ trọ (Quản lý)'
+              : 'Khách hàng (Người thuê trọ)';
+          _showSnackBar(
+            'Tài khoản này thuộc vai trò "$requiredRole". '
+            'Hãy chọn đúng vai trò rồi đăng nhập lại.',
+            isError: true,
+          );
+          return;
+        }
 
         if (serverRole == 'Admin') {
           Navigator.pushReplacement(
@@ -47,7 +71,15 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (context) => const MainScreen()),
           );
         } else {
-          final int maKhach = response['maKhach'] ?? 0;
+          final maKhach = int.tryParse(response['maKhach']?.toString() ?? '');
+          if (maKhach == null || maKhach <= 0) {
+            _showSnackBar(
+              'API đăng nhập chưa trả về mã khách hợp lệ. '
+              'Vui lòng báo quản trị viên kiểm tra AuthController.',
+              isError: true,
+            );
+            return;
+          }
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -56,20 +88,23 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        _showSnackBar(response['message'] ?? 'Sai thông tin đăng nhập!', isError: true);
+        _showSnackBar(
+          response['message'] ?? 'Sai thông tin đăng nhập!',
+          isError: true,
+        );
       }
     } catch (e) {
-      setState(() => _isLoading = false);
       if (!mounted) return;
+      setState(() => _isLoading = false);
       _showSnackBar('Đăng nhập thất bại: $e', isError: true);
     }
   }
 
-  // Hàm giả lập đăng nhập mạng xã hội (Google / Facebook)
-  void _handleSocialLogin(String provider) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đang kết nối với tài khoản $provider...')),
-    );
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -86,11 +121,14 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Nền sáng sủa, hiện đại
+      backgroundColor: const Color(0xFFF5F7FC), // Nền sáng sủa, hiện đại
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -101,13 +139,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB).withOpacity(0.1),
+                      color: const Color(0xFF4F46E5).withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.apartment_rounded,
                       size: 64,
-                      color: Color(0xFF2563EB),
+                      color: Color(0xFF4F46E5),
                     ),
                   ),
                 ),
@@ -115,7 +153,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Text(
                   'Chào mừng trở lại!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF172554),
+                  ),
                 ),
                 const SizedBox(height: 6),
                 const Text(
@@ -145,59 +187,105 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       // Chọn vai trò đăng nhập
                       DropdownButtonFormField<String>(
-                        value: _selectedRole,
+                        initialValue: _selectedRole,
                         decoration: InputDecoration(
                           labelText: 'Đăng nhập với tư cách',
-                          labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
-                          prefixIcon: const Icon(Icons.badge_outlined, color: Color(0xFF2563EB)),
+                          labelStyle: const TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 14,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.badge_outlined,
+                            color: Color(0xFF4F46E5),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF4F46E5),
+                              width: 2,
+                            ),
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
+                          fillColor: const Color(0xFFF5F7FC),
                         ),
+                        onChanged: _isLoading
+                            ? null
+                            : (value) {
+                                if (value == null) return;
+                                setState(() => _selectedRole = value);
+                              },
                         items: const [
-                          DropdownMenuItem(value: 'Customer', child: Text('Khách hàng (Người thuê trọ)')),
-                          DropdownMenuItem(value: 'Admin', child: Text('Chủ trọ (Quản lý)')),
+                          DropdownMenuItem(
+                            value: 'Customer',
+                            child: Text('Khách hàng (Người thuê trọ)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Admin',
+                            child: Text('Chủ trọ (Quản lý)'),
+                          ),
                         ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedRole = value!;
-                          });
-                        },
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8, left: 4),
+                        child: Text(
+                          'Vai trò phải khớp với tài khoản đã được cấp. '
+                          'Ứng dụng sẽ kiểm tra vai trò từ máy chủ trước khi đăng nhập.',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 11,
+                            height: 1.35,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 16),
 
                       // Ô nhập Tên đăng nhập
                       TextField(
                         controller: _usernameController,
+                        enabled: !_isLoading,
                         decoration: InputDecoration(
                           labelText: 'Tên đăng nhập',
-                          labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
-                          prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF2563EB)),
+                          labelStyle: const TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 14,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.person_outline,
+                            color: Color(0xFF4F46E5),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF4F46E5),
+                              width: 2,
+                            ),
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
+                          fillColor: const Color(0xFFF5F7FC),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -205,14 +293,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Ô nhập Mật khẩu
                       TextField(
                         controller: _passwordController,
+                        enabled: !_isLoading,
                         obscureText: _obscurePassword,
                         decoration: InputDecoration(
                           labelText: 'Mật khẩu',
-                          labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
-                          prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF2563EB)),
+                          labelStyle: const TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 14,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.lock_outline,
+                            color: Color(0xFF4F46E5),
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                               color: const Color(0xFF64748B),
                             ),
                             onPressed: () {
@@ -223,18 +320,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF4F46E5),
+                              width: 2,
+                            ),
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
+                          fillColor: const Color(0xFFF5F7FC),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -244,9 +348,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 50,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
+                            backgroundColor: const Color(0xFF4F46E5),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             elevation: 0,
                           ),
                           onPressed: _isLoading ? null : _handleLogin,
@@ -254,9 +360,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               ? const SizedBox(
                                   width: 24,
                                   height: 24,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
                                 )
-                              : const Text('Đăng nhập', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              : const Text(
+                                  'Đăng nhập',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ],
@@ -264,69 +379,32 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Đường phân cách Hoặc đăng nhập bằng mạng xã hội
-                Row(
-                  children: [
-                    const Expanded(child: Divider(color: Color(0xFFCBD5E1))),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('Hoặc tiếp tục với', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                    ),
-                    const Expanded(child: Divider(color: Color(0xFFCBD5E1))),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Nút Đăng nhập nhanh qua Google & Facebook
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          side: const BorderSide(color: Color(0xFFCBD5E1)),
-                          backgroundColor: Colors.white,
-                        ),
-                        onPressed: () => _handleSocialLogin('Google'),
-                        icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
-                        label: const Text('Google', style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.w600)),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          side: const BorderSide(color: Color(0xFFCBD5E1)),
-                          backgroundColor: Colors.white,
-                        ),
-                        onPressed: () => _handleSocialLogin('Facebook'),
-                        icon: const Icon(Icons.facebook, size: 20, color: Color(0xFF1877F2)),
-                        label: const Text('Facebook', style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.w600)),
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 24),
 
                 // Chuyển sang màn hình Đăng ký
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Chưa có tài khoản? ', style: TextStyle(color: Color(0xFF64748B))),
+                    const Text(
+                      'Chưa có tài khoản? ',
+                      style: TextStyle(color: Color(0xFF64748B)),
+                    ),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
+                          ),
                         );
                       },
-                    
+
                       child: const Text(
                         'Đăng ký ngay',
-                        style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Color(0xFF4F46E5),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
