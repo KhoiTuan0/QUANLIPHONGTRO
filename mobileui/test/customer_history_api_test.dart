@@ -10,24 +10,12 @@ void main() {
     final requestedPaths = <String>[];
     final client = MockClient((request) async {
       requestedPaths.add(request.url.path);
-      if (request.url.path == '/api/HopDong/customer/5') {
-        return _jsonResponse([
-          {'maHopDong': 10, 'maPhong': 2},
-        ]);
-      }
-      if (request.url.path == '/api/ChiSoDienNuoc') {
+      if (request.url.path == '/api/KhachThue/5/lich-su/dien-nuoc') {
         return _jsonResponse([
           {
             'maChiSo': 1,
-            'maPhong': 2,
+            'tenPhong': 'A102',
             'loaiChiSo': 'Điện',
-            'thang': 8,
-            'nam': 2026,
-          },
-          {
-            'maChiSo': 2,
-            'maPhong': 99,
-            'loaiChiSo': 'Nước',
             'thang': 8,
             'nam': 2026,
           },
@@ -42,28 +30,23 @@ void main() {
     );
 
     expect(readings, hasLength(1));
-    expect((readings.single as Map)['maPhong'], 2);
+    expect((readings.single as Map)['tenPhong'], 'A102');
     expect(
       requestedPaths,
-      containsAll(['/api/HopDong/customer/5', '/api/ChiSoDienNuoc']),
+      ['/api/KhachThue/5/lich-su/dien-nuoc'],
     );
   });
 
   test('lấy lịch sử dịch vụ theo từng hợp đồng của khách', () async {
     final client = MockClient((request) async {
-      if (request.url.path == '/api/HopDong/customer/5') {
-        return _jsonResponse([
-          {'maHopDong': 10, 'maPhong': 2},
-          {'maHopDong': 11, 'maPhong': 3},
-        ]);
-      }
-      if (request.url.path == '/api/DangKyDichVu') {
-        final contractId = request.url.queryParameters['maHopDong'];
+      if (request.url.path == '/api/KhachThue/5/lich-su/dich-vu') {
         return _jsonResponse([
           {
-            'maDangKy': contractId == '10' ? 1 : 2,
-            'maHopDong': int.parse(contractId!),
+            'maDangKy': 1,
+            'maHopDong': 10,
             'tenDichVu': 'Internet',
+            'tenPhong': 'A102',
+            'donGia': 100000,
             'trangThai': 'Đang sử dụng',
           },
         ]);
@@ -76,12 +59,13 @@ void main() {
       client: client,
     );
 
-    expect(services, hasLength(2));
+    expect(services, hasLength(1));
     expect(
       services.map((entry) => (entry as Map)['maHopDong']),
-      containsAll([10, 11]),
+      [10],
     );
-    expect((services.first as Map)['maPhong'], isNotNull);
+    expect((services.first as Map)['tenPhong'], 'A102');
+    expect((services.first as Map)['donGia'], 100000);
   });
 
   test(

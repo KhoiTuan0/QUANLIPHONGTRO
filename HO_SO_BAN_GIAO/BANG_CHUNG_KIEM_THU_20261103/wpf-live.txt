@@ -1,0 +1,28 @@
+WPF live checks against http://127.0.0.1:5187 and isolated test database
+PASS fixture uses an isolated SQL copy
+PASS customer account cannot enter the desktop app
+PASS WPF LoginViewModel authenticates against real API
+PASS live admin page: Dashboard
+PASS live admin page: Cơ sở
+PASS live admin page: Loại phòng
+PASS live admin page: Phòng trọ
+PASS live admin page: Dịch vụ
+PASS live admin page: Tài sản
+PASS live admin page: Khách thuê
+PASS live admin page: Tài khoản
+PASS live admin page: Đặt phòng
+PASS live admin page: Hợp đồng
+PASS live admin page: Báo trả phòng
+PASS live admin page: Cư trú
+PASS live admin page: Bàn giao tài sản
+PASS live admin page: Chỉ số điện nước
+PASS live admin page: Hóa đơn
+PASS live admin page: Sổ thu chi
+PASS live admin page: Dịch vụ hợp đồng
+PASS live admin page: Vi phạm
+PASS live admin page: Sửa chữa
+PASS live admin page: Thông báo
+PASS live admin page: Báo cáo
+PASS live admin page: Sao lưu
+PASS real logout clears the cookie and returns without restarting
+PASS 26 WPF live checks. Main window remains open for UI inspection.

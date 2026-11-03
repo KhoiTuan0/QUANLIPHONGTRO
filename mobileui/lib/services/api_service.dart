@@ -8,7 +8,8 @@ class ApiService {
   static final http.Client _client = _SessionClient();
   // Cổng HTTP thực tế từ file launchSettings.json của bạn là 5180
   static const String baseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:5180/api');
-  static const String meterOcrUrl = "http://10.0.2.2:5000/api/ocr-dong-ho";
+  static const String meterOcrUrl = String.fromEnvironment('METER_OCR_URL',
+      defaultValue: 'http://10.0.2.2:5000/api/ocr-dong-ho');
 
   // Cookie phiên đăng nhập cho ứng dụng mô phỏng (lưu trong RAM).
   // Khi khởi động lại ứng dụng, khách cần đăng nhập lại.
@@ -649,9 +650,8 @@ class ApiService {
   static Future<Map<String, dynamic>> processCheckoutRequest(
     int requestId, {required bool approve}) async {
     try {
-      final action = approve ? 'duyet' : 'tu-choi';
       final response = await _client.put(
-        Uri.parse('$baseUrl/BaoTraPhong/$requestId/$action'),
+        Uri.parse('$baseUrl/BaoTraPhong/$requestId/${approve ? 'duyet' : 'tu-choi'}'),
         headers: _cookieHeaders(),
       ).timeout(const Duration(seconds: 15));
       final decoded = jsonDecode(response.body);
@@ -789,7 +789,6 @@ class ApiService {
     String note = '',
   }) async {
     try {
-      final action = approve ? 'duyet' : 'tu-choi';
       final response = await _client.put(
         Uri.parse('$baseUrl/DatPhong/yeu-cau-huy/$requestId/xu-ly'),
         headers: _cookieHeaders(),
@@ -1537,23 +1536,6 @@ class ApiService {
       throw const FormatException('API trả về danh sách không đúng định dạng.');
     }
     return decoded;
-  }
-
-  static int _compareHistoryPeriodDescending(
-    Map<String, dynamic> left,
-    Map<String, dynamic> right,
-  ) {
-    final leftYear =
-        int.tryParse((left['nam'] ?? left['Nam'] ?? '').toString()) ?? 0;
-    final rightYear =
-        int.tryParse((right['nam'] ?? right['Nam'] ?? '').toString()) ?? 0;
-    final yearOrder = rightYear.compareTo(leftYear);
-    if (yearOrder != 0) return yearOrder;
-    final leftMonth =
-        int.tryParse((left['thang'] ?? left['Thang'] ?? '').toString()) ?? 0;
-    final rightMonth =
-        int.tryParse((right['thang'] ?? right['Thang'] ?? '').toString()) ?? 0;
-    return rightMonth.compareTo(leftMonth);
   }
 
   static Future<Map<String, dynamic>> collectInvoicePayment({

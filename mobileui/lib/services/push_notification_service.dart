@@ -25,8 +25,12 @@ class PushNotificationService {
   static String? _currentToken;
   static bool _initialized = false;
 
+  static bool get _supported => !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+       defaultTargetPlatform == TargetPlatform.iOS);
+
   static Future<void> initialize() async {
-    if (_initialized) return;
+    if (!_supported || _initialized) return;
     _initialized = true;
     try {
       await _messaging.requestPermission(alert: true, badge: true, sound: true);
@@ -49,7 +53,6 @@ class PushNotificationService {
       if (initial != null) _openMessages();
 
       _currentToken = await _messaging.getToken();
-      if (kDebugMode) debugPrint('FCM token: $_currentToken');
       _messaging.onTokenRefresh.listen((token) {
         _currentToken = token;
         unawaited(_registerTokenForCurrentCustomer());
@@ -66,6 +69,7 @@ class PushNotificationService {
   }
 
   static Future<void> registerCustomer(int customerId) async {
+    if (!_supported || !_initialized) return;
     _customerId = customerId;
     try {
       _currentToken ??= await _messaging.getToken();

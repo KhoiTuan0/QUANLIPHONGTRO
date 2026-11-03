@@ -523,12 +523,15 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen>
         status.toLowerCase().contains('đang sử dụng') ||
         status.toLowerCase().contains('dang su dung');
     final roomId = _value(registration, 'maPhong', 'MaPhong');
-    final rate = _numberValue(registration, 'donGiaApDung', 'DonGiaApDung');
+    final rate = _numberValue(registration, 'donGia', 'DonGia') ??
+        _numberValue(registration, 'donGiaApDung', 'DonGiaApDung');
+    final roomName = _stringValue(registration, 'tenPhong', 'TenPhong');
 
     return _historyCard(
       icon: Icons.miscellaneous_services_outlined,
       title: name,
-      subtitle: roomId == null ? null : 'Phòng $roomId',
+      subtitle: roomName != null ? 'Phòng $roomName' :
+          (roomId == null ? null : 'Phòng $roomId'),
       trailing: _statusPill(status, isActive ? Colors.green : Colors.blueGrey),
       children: [
         _infoRow(

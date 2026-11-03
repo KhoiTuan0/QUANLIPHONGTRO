@@ -1,0 +1,8 @@
+00:00 +0: loading C:/Users/TUAN KHOI/.codex/worktrees/rental-integration/QUANLIPHONGTRO/mobileui/test/live_api_test.dart
+00:00 +0: Mobile session and scoped endpoints against live API/SQL
+API Login trả trạng thái HTTP 200.
+Lỗi getMessages: Exception: Không thể tải tin nhắn (403)
+API Login trả trạng thái HTTP 200.
+Lỗi getMessages: Exception: Không thể tải tin nhắn (403)
+API Login trả trạng thái HTTP 200.
+00:01 +1: All tests passed!

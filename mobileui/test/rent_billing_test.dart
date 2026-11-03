@@ -84,6 +84,7 @@ void main() {
       month: 2,
       year: 2026,
       total: 1500000,
+      violationIds: [7, 9],
       note: 'Tiền thuê 14 ngày',
       client: client,
     );
@@ -95,6 +96,7 @@ void main() {
       'thang': 2,
       'nam': 2026,
       'tongTien': 1500000,
+      'maViPhams': [7, 9],
       'ghiChu': 'Tiền thuê 14 ngày',
     });
     expect(result['success'], isTrue);

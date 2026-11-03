@@ -1,0 +1,53 @@
+Analyzing mobileui...
+
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\checkout_request_screen.dart:210:35 - deprecated_member_use
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\screens\create_booking_screen.dart:59:7 - avoid_print
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\screens\create_contract_screen.dart:420:43 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\screens\customer_booking_list_screen.dart:256:40 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\screens\customer_booking_list_screen.dart:259:33 - curly_braces_in_flow_control_structures
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\customer_contract_extension_screen.dart:492:35 - deprecated_member_use
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\screens\customer_detail_screen.dart:34:7 - avoid_print
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\customer_detail_screen.dart:84:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\customer_detail_screen.dart:176:61 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\customer_list_screen.dart:355:62 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\screens\customer_notification_screen.dart:39:32 - curly_braces_in_flow_control_structures
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens\customer_notification_screen.dart:48:33 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\login_screen.dart:141:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\login_screen.dart:177:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\register_screen.dart:111:43 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\screens\rent_billing_screen.dart:367:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\screens\rent_billing_screen.dart:437:35 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\screens\rent_billing_screen.dart:467:35 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\room_detail_screen.dart:61:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\room_detail_screen.dart:79:46 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\room_detail_screen.dart:129:37 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\room_detail_screen.dart:156:37 - use_build_context_synchronously
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\room_list_screen.dart:137:23 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\room_list_screen.dart:162:23 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\room_list_screen.dart:521:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\room_list_screen.dart:574:56 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\room_type_screen.dart:138:31 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens\room_type_screen.dart:352:60 - deprecated_member_use
+   info - The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/foundation.dart'. Try removing the import directive - lib\services\api_service.dart:3:8 - unnecessary_import
+   info - Use the null-aware marker '?' rather than a null check via an 'if'. Try using '?' - lib\services\api_service.dart:31:5 - use_null_aware_elements
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:48:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:184:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:291:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:316:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:327:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:341:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:351:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:362:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:376:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:387:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:542:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:820:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:1603:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:1639:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:1653:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:1667:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:1690:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:1696:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\api_service.dart:1709:7 - avoid_print
+
+49 issues found. (ran in 16.1s)

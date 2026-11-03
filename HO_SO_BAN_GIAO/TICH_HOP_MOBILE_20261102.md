@@ -1,5 +1,10 @@
 # Bản tích hợp để kiểm thử Mobile — 02/11/2026
 
+Cập nhật 03/11: đã cài Flutter, chạy test Dart với API/SQL, build/mở Flutter
+Windows và smoke WPF trên máy Khôi. Xem
+[kết quả và hướng dẫn đổi máy](KIEM_THU_FLUTTER_20261103.md).
+Kiểm thử Android và xác nhận chạy trên máy Toàn vẫn còn riêng.
+
 Nhánh: codex/integration-final. Nền API/WPF: efda895. Mobile lấy từ
 Toan2208/main tại c106758 (Mobile 05fda63). Đây là bản tích hợp chờ kiểm thử
 Flutter trên máy Toàn, chưa phải bản main đã nghiệm thu.
@@ -33,8 +38,8 @@ Flutter trên máy Toàn, chưa phải bản main đã nghiệm thu.
 - 278 kiểm tra API độc lập đạt, có kiểm tra quyền các endpoint mới, giả mạo
   khách chat, giới hạn mật khẩu và sinh byte PDF. Các kiểm tra này không dùng SQL.
 - Không thay đổi file WPF/WinForms hoặc database demo trong đợt tích hợp này.
-- Chưa chạy flutter analyze, flutter test hoặc APK; chưa xác nhận luồng end-to-end
-  với SQL cho các phần mới. Không suy ra các bước đó đã đạt từ kết quả build API.
+- Tại thời điểm 02/11 chưa chạy Flutter/APK. Kết quả Flutter và SQL bổ sung ngày
+  03/11 nằm ở tài liệu kiểm thử phía trên; APK/thiết bị Android vẫn chưa kiểm thử.
 
 ## Toàn chạy trên máy có Flutter
 

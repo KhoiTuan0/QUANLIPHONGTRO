@@ -9,6 +9,7 @@ void main() {
     await tester.pumpWidget(const QuanLyPhongTroApp());
 
     // Kiểm tra xem màn hình Đăng nhập (hoặc tiêu đề ứng dụng) có xuất hiện hay không
-    expect(find.text('Quản Lý Phòng Trọ'), findsWidgets);
+    expect(find.text('Chào mừng trở lại!'), findsOneWidget);
+    expect(find.byType(TextField), findsNWidgets(2));
   });
 }

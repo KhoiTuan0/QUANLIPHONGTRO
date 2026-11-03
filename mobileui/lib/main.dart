@@ -1,5 +1,6 @@
 import 'theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 // Nếu MainNavigatorScreen hoặc LoginScreen của bạn nằm ở file main_screen.dart, hãy đảm bảo import đúng:
 // import 'screens/main_screen.dart'; 
@@ -8,8 +9,15 @@ import 'services/push_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await PushNotificationService.initialize();
+  if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS)) {
+    try {
+      await Firebase.initializeApp();
+      await PushNotificationService.initialize();
+    } catch (error) {
+      debugPrint('Push notification setup unavailable: $error');
+    }
+  }
   runApp(const QuanLyPhongTroApp());
 }
 
