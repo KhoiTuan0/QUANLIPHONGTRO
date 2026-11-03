@@ -1,9 +1,10 @@
 # Kịch bản diễn tập với GVHD — 03/11/2026
 
-Tài liệu này dùng cho buổi diễn tập trước giáo viên hướng dẫn. Đây là bản soạn
-trước; sau khi Mobile kiểm thử xong và CSDL được làm sạch, cần thay các ô
-`[CHỌN TRƯỚC]` bằng mã phòng, khách, hợp đồng và hóa đơn thực tế. Không trình
-bày số liệu khác với màn hình đang chạy.
+Tài liệu này dùng cho buổi diễn tập trước giáo viên hướng dẫn. Dữ liệu sạch đã
+được chốt ngày 03/11/2026. Mã phòng, khách, hợp đồng và hóa đơn để dùng ở các ô
+`[CHỌN TRƯỚC]` đã liệt kê tại [bảng hồ sơ diễn tập](CHOT_DIEN_TAP_20261103.md).
+Sau mỗi lần thao tác ghi, số liệu trên màn hình có thể thay đổi; phục hồi backup
+nền trước lần diễn tập tiếp theo nếu muốn bắt đầu đúng cùng trạng thái.
 
 ## 1. Mục tiêu buổi diễn tập
 
